@@ -10,7 +10,7 @@ def handle_astar(req):
 	print "Handling A* Request"
 
 	# Get currentlocation
-	currentPose = pose
+	currentPose = req.startPose
 	# get the map
 	currentMap = Map
 	# get the goal orientation
@@ -26,21 +26,21 @@ def astar_server():
 	print "Ready to calculate A* Path"
 	rospy.spin()
 
-def read_odometry(msg):
-	global pose
-	pose = msg.pose.pose
-
 def read_map(msg):
 	global Map
 	Map = msg
 	
 if __name__ == "__main__":
-	global pose
 	global Map
 	global odom_list
+	global pub_expanded_cell
+	global pub_frontier_cell
+	global pub_unexplored_cell
 
-	pose_sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1)
 	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1)
+	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
+	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
+	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
 
 	odom_list = tf.TransformListener()
 
