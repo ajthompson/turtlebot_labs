@@ -14,9 +14,7 @@ def handle_astar(req):
 	# get the map
 	currentMap = Map
 	# get the goal orientation
-	goalPose = req.endPose
-
-	
+	goalPose = req.endPose	
 
 
 # Initialize the A* server
@@ -25,6 +23,10 @@ def astar_server():
 	s = rospy.Service('calc_astar', Astar, handle_astar)
 	print "Ready to calculate A* Path"
 	rospy.spin()
+
+# Generates the heuristic for the position
+def heuristic(pose, destPose):
+	return math.sqrt((pose.position.x - destPose.position.x)**2 + (pose.position.y - destPose.position.y)**2)
 
 def read_map(msg):
 	global Map
