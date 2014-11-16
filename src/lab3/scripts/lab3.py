@@ -99,4 +99,5 @@ if __name__ == '__main__':
     
     # Make the robot do stuff...
     rospy.spin()
+    
     print "Lab 3 complete!"
