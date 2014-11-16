@@ -1,0 +1,3 @@
+<launch>
+<node name="astar" pkg="lab3" type="astar_server.py" args="--test" respawn="true" />
+</launch>
