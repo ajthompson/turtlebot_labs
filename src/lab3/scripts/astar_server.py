@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
-from labs.srv import *
+from lab3.srv import *
 import math
 from Queue import PriorityQueue
 import rospy, tf
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
 from nav_msgs.msg import Odometry, OccupancyGrid, Path
 
 # create the class for the node
