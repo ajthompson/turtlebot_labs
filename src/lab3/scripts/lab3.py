@@ -7,6 +7,7 @@ from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped
 import sys, select, termios, tty
 from nav_msgs.msg import Odometry,OccupancyGrid
+from lab3.srv import *
 
 # Add additional imports for each of the message types used
 
@@ -40,7 +41,7 @@ def readMap(msg):
     print Map.resolution
 
 #Initial Position Callback Function to send start points to robot
-def readiPose(msg)
+def readiPose(msg):
     global initialPose
     
     initialpose = msg.PoseWithCovariance.pose
@@ -49,8 +50,8 @@ def readiPose(msg)
 pass
 
 #Move Base Simple Callback Function to send endpoints to robot
-def moveBaseSimple(msg)
-pass
+def moveBaseSimple(msg):
+    pass
 
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
@@ -99,4 +100,5 @@ if __name__ == '__main__':
     
     # Make the robot do stuff...
     rospy.spin()
+    
     print "Lab 3 complete!"
