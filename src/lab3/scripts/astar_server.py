@@ -4,8 +4,8 @@ import rospy, tf
 #from Astar.srv import *
 import math
 from Queue import PriorityQueue
-from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
-from nav_msgs.msg import Odometry, OccupancyGrid, Path,GridCells
+from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped, Point
+from nav_msgs.msg import Odometry, OccupancyGrid, Path, GridCells
 
 # create the class for the node
 class Node:
@@ -36,7 +36,9 @@ def handle_astar(req):
 	print "Handling A* Request"
 
 	global width
+	global height
 	global resolution
+	global offsetPose
 
 	global start_x
 	global start_y
@@ -70,39 +72,45 @@ def handle_astar(req):
 	goal_x = math.floor(goalPose.position.x / resolution)
 	goal_y = math.floor(goalPose.position.y / resolution)
 
-	# create the base point class
+	# create the base placeholder point
 	point = Point()
 	point.x = 0
 	point.y = 0
 	point.z = 0
 
 	# create the frontier grid to publish
-	frontier_grid = GridCell()
+	frontier_grid = GridCells()
 	frontier_grid.cell_width = resolution
 	frontier_grid.cell_height = resolution
 
 	# create the expanded grid
-	expanded_grid = GridCell()
+	expanded_grid = GridCells()
 	expanded_grid.cell_width = resolution
 	expanded_grid.cell_height = resolution
 
 	# create the unexplored grid
-	unexplored_grid = GridCell()
+	unexplored_grid = GridCells()
 	unexplored_grid.cell_width = resolution
 	unexplored_grid.cell_height = resolution
 
 	# fill the unexplored grid
 	for y in range(height):
 		for x in range(width):
-			point.x = x * resolution
-			point.y = y * resolution
-			unexplored_grid.cells.append(point)
+			unexplored_grid.cells.append(Point(x * resolution, y * resolution, 0))
+
+	frontier_grid.cells.append(Point(start_x * resolution, start_y * resolution, 0))
+
+	pub_frontier_cell.publish(frontier_grid)
+	pub_expanded_cell.publish(expanded_grid)
+	pub_unexplored_cell.publish(unexplored_grid)
 
 	frontier = PriorityQueue()
 
 	# add start node
 	current = Node(0, start_x, start_y, None)
 	frontier.put(Node(0, start_x, start_y, None))
+
+
 
 	while 1:
 		current = frontier.get()
@@ -178,6 +186,7 @@ def handle_astar(req):
 
 		# add the current node to the explored nodes
 		expanded.put(current)
+		addToExpanded(current.i_x, current.i_y)
 
 		# create the path object
 		path = Path(goal_x,goal_y,start_x,start_y)
@@ -206,14 +215,62 @@ def Path(goal_x,goal_y,start_x,start_y):
 # Initialize the A* server
 def astar_server():
 	rospy.init_node('astar_server')
+
 	global pub_expanded_cell
 	global pub_frontier_cell
 	global pub_unexplored_cell
+
 	s = rospy.Service('calc_astar', Astar, handle_astar)
+
 	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1)
 	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
 	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
 	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
+
+	global width
+	global height
+	global resolution
+	global offsetPose
+
+	global frontier_grid
+	global expanded_grid
+	global unexplored_grid
+
+	rospy.sleep(rospy.Duration(1, 0))
+
+	# get the map
+	currentMap = Map
+
+	# extract the maps metadata
+	resolution = currentMap.info.resolution
+	width = currentMap.info.width
+	height = currentMap.info.height
+	offsetPose = currentMap.info.origin
+
+	# create the frontier grid to publish
+	frontier_grid = GridCells()
+	frontier_grid.cell_width = resolution
+	frontier_grid.cell_height = resolution
+
+	# create the expanded grid
+	expanded_grid = GridCells()
+	expanded_grid.cell_width = resolution
+	expanded_grid.cell_height = resolution
+
+	# create the unexplored grid
+	unexplored_grid = GridCells()
+	unexplored_grid.cell_width = resolution
+	unexplored_grid.cell_height = resolution
+
+	# fill the unexplored grid
+	for y in range(height):
+		for x in range(width):
+			unexplored_grid.cells.append(Point(x * resolution, y * resolution, 0))
+
+	pub_frontier_cell.publish(frontier_grid)
+	pub_expanded_cell.publish(expanded_grid)
+	pub_unexplored_cell.publish(unexplored_grid)
+
 	print "Ready to calculate A* Path"
 	rospy.spin()
 
@@ -221,13 +278,8 @@ def addToFrontier(x, y):
 	global frontier_grid
 	global unexplored_grid
 
-	point = Point()
-	point.x = x * resolution
-	point.y = y * resolution
-	point.z = 0
-
-	unexplored_grid.remove(point)
-	frontier_grid.append(point)
+	unexplored_grid.remove(Point(x * resolution, y * resolution, 0))
+	frontier_grid.append(Point(x * resolution, y * resolution, 0))
 
 	pub_unexplored_cell.publish(unexplored_grid)
 	pub_frontier_cell.publish(frontier_grid)
@@ -236,13 +288,8 @@ def addToExpanded(x, y):
 	global frontier_grid
 	global expanded_grid
 
-	point = Point()
-	point.x = x * resolution
-	point.y = y * resolution
-	point.z = 0
-
-	frontier_grid.remove(point)
-	expanded_grid.append(point)
+	frontier_grid.remove(Point(x * resolution, y * resolution, 0))
+	expanded_grid.append(Point(x * resolution, y * resolution, 0))
 
 	pub_frontier_cell.publish(frontier_grid)
 	pub_expanded_cell.publish(expanded_grid)
