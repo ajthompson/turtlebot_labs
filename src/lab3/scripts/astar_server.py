@@ -9,10 +9,17 @@ from nav_msgs.msg import Odometry, OccupancyGrid, Path
 
 # create the class for the node
 class Node:
+	cost = 0
+	dist_cost = 0
+	i_x = 0
+	i_y = 0
+	parent = None
+
 	def __init__(self, cost, i_x, i_y, parent):
 		self.i_x = i_x
 		self.i_y = i_y
 		self.cost = cost + self.heuristic(i_x, i_y)
+		self.dist_cost = cost
 		self.parent = parent
 
 	def __eq__ (self, other):
@@ -104,7 +111,7 @@ def handle_astar(req):
 		# add children to frontier
 		if current.i_x > 0 and current.i_y > 0:				# above left
 			if Map.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied
-				child = Node(current.cost, current.i_x - 1, current.i_y - 1, current)
+				child = Node(current.dist_cost, current.i_x - 1, current.i_y - 1, current)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -112,7 +119,7 @@ def handle_astar(req):
 
 		if current.i_y > 0:									# above
 			if Map.data[(current.i_y - 1)*width + current.i_x] < 50:		# check if occupied
-				child = Node(current.cost, current.i_x, current.i_y - 1, current)
+				child = Node(current.dist_cost, current.i_x, current.i_y - 1, current)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -120,7 +127,7 @@ def handle_astar(req):
 
 		if current.i_x < width and current.i_y > 0:			# above right
 			if Map.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
-				child = Node(current.cost, current.i_x + 1, current.i_y - 1, current)
+				child = Node(current.dist_cost, current.i_x + 1, current.i_y - 1, current)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -128,7 +135,7 @@ def handle_astar(req):
 
 		if current.i_x < width:								# right
 			if Map.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
-				child = Node(current.cost, current.i_x + 1, current.i_y, current)
+				child = Node(current.dist_cost, current.i_x + 1, current.i_y, current)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -136,7 +143,7 @@ def handle_astar(req):
 
 		if current.i_x < width and current.i_y < height:	# bottom right
 			if Map.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
-				child = Node(current.cost, current.i_x + 1, current.i_y + 1, current)
+				child = Node(current.dist_cost, current.i_x + 1, current.i_y + 1, current)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -144,7 +151,7 @@ def handle_astar(req):
 
 		if current.i_y < height:							# bottom
 			if Map.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
-				child = Node(current.cost, current.i_x, current.i_y + 1)
+				child = Node(current.dist_cost, current.i_x, current.i_y + 1)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -152,7 +159,7 @@ def handle_astar(req):
 
 		if current.i_x > 0 and current.i_y < height:		# bottom left
 			if Map.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
-				child = Node(current.cost, current.i_x - 1, current.i_y + 1)
+				child = Node(current.dist_cost, current.i_x - 1, current.i_y + 1)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
@@ -160,7 +167,7 @@ def handle_astar(req):
 
 		if current.i_x > 0:									# left
 			if Map.data[current.i_y*width + (current.i_x - 1)] < 50:		# check if occupied
-				child = Node(current.cost, current.i_x - 1, current.i_y)
+				child = Node(current.dist_cost, current.i_x - 1, current.i_y)
 				if child not in frontier or child not in explored:
 					frontier.put(child)
 					addToFrontier(child.i_x, child.i_y)
