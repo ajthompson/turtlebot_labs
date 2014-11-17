@@ -18,8 +18,8 @@ class Node:
 	def __init__(self, cost, i_x, i_y, parent):
 		self.i_x = i_x
 		self.i_y = i_y
-		self.cost = cost + self.heuristic(i_x, i_y)
-		self.dist_cost = cost
+		self.cost = cost + self.heuristic()
+		self.dist_cost = cost + self.distance()
 		self.parent = parent
 
 	def __eq__ (self, other):
@@ -27,6 +27,9 @@ class Node:
 
 	def heuristic(self):
 		return math.sqrt((goal_x - self.i_x)**2 + (goal_y - self.i_y)**2)
+
+	def distance(self):
+		return math.sqrt((self.i_x - self.parent.i_x)**2 + (self.i_y - self.parent.i_y)**2)
 
 # Handle requests to the A* server
 def handle_astar(req):
