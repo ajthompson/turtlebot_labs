@@ -1,4 +1,0 @@
-geometry_msgs/Pose startPose
-geometry_msgs/Pose endPose
----
-nav_msgs/Path path

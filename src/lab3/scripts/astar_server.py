@@ -1,11 +1,11 @@
 #!/usr/bin/env python
-
 from lab3.srv import *
+import rospy, tf
+#from Astar.srv import *
 import math
 from Queue import PriorityQueue
-import rospy, tf
 from geometry_msgs.msg import PoseWithCovarianceStamped, PoseStamped
-from nav_msgs.msg import Odometry, OccupancyGrid, Path
+from nav_msgs.msg import Odometry, OccupancyGrid, Path,GridCells
 
 # create the class for the node
 class Node:
@@ -170,17 +170,40 @@ def handle_astar(req):
 		expanded.put(current)
 
 		# create the path object
-		path = Path()
+		path = Path(goal_x,goal_y,start_x,start_y)
 
 		# fill in the path
 		# TODO: fill in path
-
+        #TODO: keep track of direction of robot
 		return AstarResponse(path)
+
+# Reconstruct path
+def Path(goal_x,goal_y,start_x,start_y):
+    current.i_x = copy.copy(goal_x)
+    current.i_y = copy.copy(goal_y)
+    path = []
+    # start at the goal and follow the parent chain to the beginning
+    path.append(goal_x)
+    path.append(goal_y)
+    while current.contents != start.contents:
+        up = current.parent
+        path.append(up)
+        current = up
+    # reverse the list to give the start-to-goal ordering
+    path.reverse()
+    return path
 
 # Initialize the A* server
 def astar_server():
 	rospy.init_node('astar_server')
+	global pub_expanded_cell
+	global pub_frontier_cell
+	global pub_unexplored_cell
 	s = rospy.Service('calc_astar', Astar, handle_astar)
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1)
+	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
+	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
+	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
 	print "Ready to calculate A* Path"
 	rospy.spin()
 
@@ -219,22 +242,21 @@ def read_map(msg):
 	Map = msg
 	
 if __name__ == "__main__":
+	
 	global Map
 	global odom_list
 	global pub_expanded_cell
 	global pub_frontier_cell
 	global pub_unexplored_cell 	# not sure if we actually need this?
-								# it needlessly complicates things because
-								# then we need nodes even if they aren't going
-								# to be used.
+	# it needlessly complicates things because
+	# then we need nodes even if they aren't going
+	# to be used.
 
-	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1)
-	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
-	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
-	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
+	
+    #pub_path = rospy.Publisher('/Path',Path)
 
-	odom_list = tf.TransformListener()
+	
 
-	rospy.sleep(rospy.Duration(2, 0))
+	#rospy.sleep(rospy.Duration(2, 0))
 
 	astar_server()

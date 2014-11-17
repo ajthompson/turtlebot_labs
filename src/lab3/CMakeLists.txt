@@ -56,7 +56,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  astar.srv
+  Astar.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -86,7 +86,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES lab3
-#  CATKIN_DEPENDS other_catkin_pkg
+ CATKIN_DEPENDS rospy message_runtime
 #  DEPENDS system_lib
 )
 
