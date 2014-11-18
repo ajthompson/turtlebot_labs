@@ -131,6 +131,7 @@ if __name__ == '__main__':
 
     # These are global variables. Write "global <variable_name>" in any other function
     #  to gain access to these global variables
+
     global calc_astar
     global pub
     global pose
@@ -170,4 +171,5 @@ if __name__ == '__main__':
     #rospy.spin()
     #make_obstacles()
     rospy.spin()
+
     print "Lab 3 complete!"

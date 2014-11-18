@@ -236,6 +236,7 @@ def getPath(goal_x,goal_y,start_x,start_y):
 # Initialize the A* server
 def astar_server():
 	rospy.init_node('astar_server')
+
 	global path
 	global Map
 
