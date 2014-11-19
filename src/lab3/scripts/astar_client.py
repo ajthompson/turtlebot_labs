@@ -15,6 +15,8 @@ import random
 # Add additional imports for each of the message types used
 def compute_path():
 
+	global path
+
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -44,14 +46,17 @@ def compute_path():
 	print goalPose.pose.position.x
 	print goalPose.pose.position.y
 	resp = calc_astar_client(startPose, goalPose)
+	try:
+		path = resp.path
+	except:
+		print "No path could be found"
+	path_pub.publish(path)
 	print "Finished calculation"
 
 	recalc = 0
 
 	while 1 and not rospy.is_shutdown():
-		path_pub.publish(resp.path)
-		rospy.sleep(rospy.Duration(0.01))
-
+		rospy.sleep(rospy.Duration(0.5))
 		# check if the start or goal has changed
 		if startPose != initialpose:
 			startPose = initialpose
@@ -60,7 +65,13 @@ def compute_path():
 			goalPose = goal
 			recalc = 1
 		if recalc:
-			path = calc_astar_client(startPose, goalPose)
+			resp = calc_astar_client(startPose, goalPose)
+			try:
+				path = resp.path
+			except:
+				print "No path could be found"
+			rospy.sleep(rospy.Duration(0.5))
+			path_pub.publish(path)
 			recalc = 0
 
 
@@ -123,6 +134,10 @@ def calc_astar_client(start_pose, goal_pose):
 		return resp1
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
+	except TypeError:
+		print "Invalid start or goal position"
+	except Empty:
+		print "Unreachable goal position"
 
 
 #Odometry Callback function.
@@ -195,6 +210,7 @@ if __name__ == '__main__':
     global odom_list
     global accum
     global Map
+    global path
     
     # Replace the elipses '...' in the following lines to set up the publishers and subscribers the lab requires
 
