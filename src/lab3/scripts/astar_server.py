@@ -113,18 +113,18 @@ def handle_astar(req):
 		except TypeError, e:
 			print "Goal Position out of bounds"
 			return AstarResponse(None)
-	if Map.data[start_x*width + start_y] >= 50:
-		try:
-			raise TypeError
-		except TypeError, e:
-			print "Start position on impassable terrain"
-			return AstarResponse(None)
-	if Map.data[goal_x*width + goal_y] >= 50:
-		try:
-			raise TypeError
-		except TypeError, e:
-			print "Goal position on impassable terrain"
-			return AstarResponse(None)
+	# if currentMap.data[start_x*width + start_y] >= 50:
+	# 	try:
+	# 		raise TypeError
+	# 	except TypeError, e:
+	# 		print "Start position on impassable terrain"
+	# 		return AstarResponse(None)
+	# if currentMap.data[goal_x*width + goal_y] >= 50:
+	# 	try:
+	# 		raise TypeError
+	# 	except TypeError, e:
+	# 		print "Goal position on impassable terrain"
+	# 		return AstarResponse(None)
 
 	print "Start:"
 	print "\tx: %s" % start_x
@@ -170,7 +170,10 @@ def handle_astar(req):
 			unexplored_maarray.data[index] = point
 			frontier_maarray.mask[index] = 1
 			expanded_maarray.mask[index] = 1
-			unexplored_maarray.mask[index] = 0
+			if currentMap.data[index] < 50 and currentMap.data[index] != -1:
+				unexplored_maarray.mask[index] = 0
+			else:
+				unexplored_maarray.mask[index] = 1
 
 	addToFrontier(start_x, start_y)
 
@@ -208,7 +211,7 @@ def handle_astar(req):
 
 		# add children to frontier
 		if current.i_x > 0 and current.i_y > 0:				# above left
-			if Map.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied
+			if currentMap.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -218,7 +221,7 @@ def handle_astar(req):
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_y > 0:									# above
-			if Map.data[(current.i_y - 1)*width + current.i_x] < 50:		# check if occupied
+			if currentMap.data[(current.i_y - 1)*width + current.i_x] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -228,7 +231,7 @@ def handle_astar(req):
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x < width and current.i_y > 0:			# above right
-			if Map.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
+			if currentMap.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -240,7 +243,7 @@ def handle_astar(req):
 		# rospy.sleep(rospy.Duration(2, 0))
 
 		if current.i_x < width:								# right
-			if Map.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
+			if currentMap.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -250,7 +253,7 @@ def handle_astar(req):
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x < width and current.i_y < height:	# bottom right
-			if Map.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
+			if currentMap.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -260,7 +263,7 @@ def handle_astar(req):
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_y < height:							# bottom
-			if Map.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
+			if currentMap.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -270,7 +273,7 @@ def handle_astar(req):
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x > 0 and current.i_y < height:		# bottom left
-			if Map.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
+			if currentMap.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -282,7 +285,7 @@ def handle_astar(req):
 	
 
 		if current.i_x > 0:									# left
-			if Map.data[current.i_y*width + (current.i_x - 1)] < 50:		# check if occupied
+			if currentMap.data[current.i_y*width + (current.i_x - 1)] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
@@ -497,11 +500,11 @@ def publishStuff():
 		pub_expanded_cell.publish(expanded_grid)
 	except NameError:
 		pass
-	try:
-		unexplored_grid.cells = unexplored_maarray[~unexplored_maarray.mask].data.tolist()
-		pub_unexplored_cell.publish(unexplored_grid)
-	except NameError:
-		pass
+	# try:
+	# 	unexplored_grid.cells = unexplored_maarray[~unexplored_maarray.mask].data.tolist()
+	# 	pub_unexplored_cell.publish(unexplored_grid)
+	# except NameError:
+	# 	pass
 	# try:
 	# 	path_pub.publish(path)
 	# except NameError:

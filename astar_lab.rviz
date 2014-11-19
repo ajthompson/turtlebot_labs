@@ -14,7 +14,6 @@ Panels:
         - /FrontierGrid1/Status1
         - /ExpandedGrid1
         - /Path1
-        - /Path1/Status1
         - /StartPose1
         - /StartPose1/Status1
         - /GoalPose1
@@ -106,21 +105,21 @@ Visualization Manager:
       Name: GridCells
       Topic: local_costmap/obstacles
       Value: true
-    - Alpha: 0.3
+    - Alpha: 0.5
       Class: rviz/GridCells
       Color: 0; 255; 255
       Enabled: true
       Name: UnexploredGrid
       Topic: /astar/unexplored
       Value: true
-    - Alpha: 0.3
+    - Alpha: 0.5
       Class: rviz/GridCells
       Color: 255; 0; 0
       Enabled: true
       Name: FrontierGrid
       Topic: /astar/frontier
       Value: true
-    - Alpha: 0.3
+    - Alpha: 0.5
       Class: rviz/GridCells
       Color: 255; 170; 0
       Enabled: true
@@ -130,7 +129,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 40; 25; 255
+      Color: 0; 0; 127
       Enabled: true
       Name: Path
       Topic: /TrajectoryPlannerROS/global_plan
@@ -195,7 +194,7 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 90.6776
+      Scale: 10
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 0
