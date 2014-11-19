@@ -23,7 +23,8 @@ class Node:
 		self.i_x = int(i_x)
 		self.i_y = int(i_y)
 		self.parent = parent
-		self.dist_cost = cost + self.distance()
+		self.orientation = self.calc_orientation()
+		self.dist_cost = cost + self.distance() + abs(self.orientation - self.get_parent_orientation())
 		self.cost = self.dist_cost + self.heuristic()
 
 	def __eq__ (self, other):
@@ -34,12 +35,28 @@ class Node:
 			return self.cost - other.cost
 		return 9999
 
+	def calc_orientation(self):
+		if self.parent != None:
+			direction = math.atan2(self.i_y - self.parent.i_y, self.i_x - self.parent.i_x)
+			while direction > 2 * math.pi:
+				direction -= 2 * math.pi
+			while direction < 0:
+				direction += 2 * math.pi
+			return direction / (math.pi * 2)
+		# start node
+		return math.atan2(1, startPose.pose.orientation.z) * 2
+
 	def heuristic(self):
 		return math.sqrt((goal_x - self.i_x)**2 + (goal_y - self.i_y)**2)
 
 	def distance(self):
 		if self.parent != None:
 			return math.sqrt((1.0*self.i_x - 1.0*self.parent.i_x)**2 + (1.0*self.i_y - 1.0*self.parent.i_y)**2)
+		return 0
+
+	def get_parent_orientation(self):
+		if self.parent != None:
+			return self.parent.orientation
 		return 0
 
 # Handle requests to the A* server
