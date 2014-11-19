@@ -1,4 +1,4 @@
-geometry_msgs/Pose startPose
-geometry_msgs/Pose endPose
+geometry_msgs/PoseStamped startPose
+geometry_msgs/PoseStamped endPose
 ---
 nav_msgs/Path path

@@ -3,15 +3,66 @@
 import math
 import rospy, tf
 import roslib
+from lab3.srv import *
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
 import sys, select, termios, tty
-from nav_msgs.msg import Odometry,OccupancyGrid,GridCells
+from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 import random
 
 #from lab3.srv import *
 
 # Add additional imports for each of the message types used
+def compute_path():
+
+	print "Entering loop to wait for positions"
+	endWhileStart = 1
+	endWhileGoal = 1
+	# Make sure it doesn't start computation until both start and goal positions exist
+	while (endWhileStart or endWhileGoal) and not rospy.is_shutdown():
+		try:
+			startPose = initialpose
+			endWhileStart = 0
+		except NameError:
+			# print "Start not found"
+			# startPose = None
+			pass
+
+		try:
+			goalPose = goal
+			endWhileGoal = 0
+		except NameError:
+			# print "Goal not found"
+			# goalPose = None
+			pass
+
+	print "Found start and goal"
+	print startPose.header.frame_id
+	print startPose.pose.position.x
+	print startPose.pose.position.y
+	print goalPose.header.frame_id
+	print goalPose.pose.position.x
+	print goalPose.pose.position.y
+	resp = calc_astar_client(startPose, goalPose)
+	print "Finished calculation"
+
+	recalc = 0
+
+	while 1 and not rospy.is_shutdown():
+		path_pub.publish(resp.path)
+		rospy.sleep(rospy.Duration(0.01))
+
+		# check if the start or goal has changed
+		if startPose != initialpose:
+			startPose = initialpose
+			recalc = 1
+		if goalPose != goal:
+			goalPose = goal
+			recalc = 1
+		if recalc:
+			path = calc_astar_client(startPose, goalPose)
+			recalc = 0
+
 
 # Add additional imports for each of the message types used
 def make_obstacles():
@@ -65,7 +116,6 @@ def make_obstacles():
 #Service Proxy?
 
 def calc_astar_client(start_pose, goal_pose):
-	pass
 	rospy.wait_for_service('calc_astar')
 	try:
 		calc_astar = rospy.ServiceProxy('calc_astar', Astar)
@@ -105,16 +155,21 @@ def readMap(msg):
 
 #Initial Position Callback Function to send start points to robot
 def readiPose(msg):
-    global initialPose
-    
-    initialpose = msg.PoseWithCovariance.pose
-    
-    print initialpose
-pass
+	print "Converting Pose"
+	convertedPose = PoseStamped()
+	convertedPose.header = msg.header
+	convertedPose.pose = msg.pose.pose
+	pose_stamped_pub.publish(convertedPose)
+
+def readConvPose(msg):
+	global initialpose
+	initialpose = msg
 
 #Move Base Simple Callback Function to send endpoints to robot
 def moveBaseSimple(msg):
-    pass
+    global goal
+    print "Goal"
+    goal = msg
 
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
@@ -134,6 +189,7 @@ if __name__ == '__main__':
 
     global calc_astar
     global pub
+    global pose_stamped_pub
     global pose
     global odom_tf
     global odom_list
@@ -155,8 +211,14 @@ if __name__ == '__main__':
     map_sub = rospy.Subscriber('/map', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
  
     ipose_sub = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, readiPose, queue_size=1)#Callback Function to read initial robot position
+
+    pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
+
+    converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
    
     move_base_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
+
+    path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
 
     # Use this object to get the robot's Odometry 
     odom_list = tf.TransformListener()
@@ -164,12 +226,22 @@ if __name__ == '__main__':
     # Use this command to make the program wait for some seconds
     #rospy.sleep(rospy.Duration(2, 0))
 
+    try:
+    	test = Map
+    except NameError:
+    	Map = None
+
+    while Map == None and not rospy.is_shutdown():
+    	pass
+
     print "Starting Lab 3"
     print "%s" % Map.origin.position.x
     print "%s" % Map.origin.position.y
+    
     # Make the robot do stuff...
     #rospy.spin()
     #make_obstacles()
+    compute_path()
     rospy.spin()
 
     print "Lab 3 complete!"
