@@ -163,11 +163,14 @@ def handle_astar(req):
 
 		# add children to frontier
 		if current.i_x > 0 and current.i_y > 0:				# above left
-			if Map.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied
+			if Map.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied		
+				print "1"
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y - 1, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
+					print "2"
 					if child.i_x == goal_x and child.i_y == goal_y:
 						frontier.put((0, child))
+						print "3"
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
@@ -176,9 +179,11 @@ def handle_astar(req):
 
 		if current.i_y > 0:									# above
 			if Map.data[(current.i_y - 1)*width + current.i_x] < 50:		# check if occupied
+				print "4"
 				child = Node(current.dist_cost, current.i_x, current.i_y - 1, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "5"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -188,9 +193,11 @@ def handle_astar(req):
 
 		if current.i_x < width and current.i_y > 0:			# above right
 			if Map.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
+				print "6"
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y - 1, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "7"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -202,9 +209,11 @@ def handle_astar(req):
 
 		if current.i_x < width:								# right
 			if Map.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
+				print "8"
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "9"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -214,9 +223,11 @@ def handle_astar(req):
 
 		if current.i_x < width and current.i_y < height:	# bottom right
 			if Map.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
+				print "10"
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y + 1, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "11"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -226,9 +237,11 @@ def handle_astar(req):
 
 		if current.i_y < height:							# bottom
 			if Map.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
-				child = Node(current.dist_cost, current.i_x, current.i_y + 1, current)
+				child = Node(current.dist_cost, current.i_x, current.i_y + 1, current)	
+				print "12"
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "13"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -238,9 +251,11 @@ def handle_astar(req):
 
 		if current.i_x > 0 and current.i_y < height:		# bottom left
 			if Map.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
+				print "14"
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y + 1, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "15"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
@@ -250,16 +265,18 @@ def handle_astar(req):
 
 		if current.i_x > 0:									# left
 			if Map.data[current.i_y*width + (current.i_x - 1)] < 50:		# check if occupied
+				print "16"
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y, current)
 				if (not checkFrontier(child)) and (not checkExpanded(child)):
 					if child.i_x == goal_x and child.i_y == goal_y:
+						print "17"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 					# print "Add child with cost %s" % child.cost
 					print "Added child at %s, %s" % (child.i_x, child.i_y)
-
+		
 		# add the current node to the explored nodes
 		expanded.put(current)
 		addToExpanded(current.i_x, current.i_y)
@@ -424,15 +441,16 @@ def addToExpanded(x, y):
 	# pub_expanded_cell.publish(expanded_grid)
 
 def checkFrontier(child):
-	
-	if frontier_grid.cells[child.i_y * width + child.i_x] == None:
-		return False
-	return True
+	print "Entered cehckfrontier"
+	if type(frontier_grid.cells[child.i_y * width + child.i_x]) is Point:
+		return True
+	return False
 
 def checkExpanded(child):
-	if frontier_grid.cells[child.i_y * width + child.i_x] == None:
-		return False
-	return True
+	print "Entered cehck Expanded"
+	if type(frontier_grid.cells[child.i_y * width + child.i_x]) is Point:
+		return True
+	return False
 
 def read_map(msg):
 	global Map
