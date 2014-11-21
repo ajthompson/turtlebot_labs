@@ -235,7 +235,7 @@ def handle_astar(req):
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
-		if current.i_x < width and current.i_y > 0:			# above right
+		if current.i_x < width - 1 and current.i_y > 0:			# above right
 
 			if currentMap.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
 
@@ -250,7 +250,7 @@ def handle_astar(req):
 
 		# rospy.sleep(rospy.Duration(2, 0))
 
-		if current.i_x < width:								# right
+		if current.i_x < width - 1:								# right
 
 			if currentMap.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
 
@@ -263,7 +263,7 @@ def handle_astar(req):
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
-		if current.i_x < width and current.i_y < height:	# bottom right
+		if current.i_x < width - 1 and current.i_y < height - 1:	# bottom right
 
 			if currentMap.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
 
@@ -276,7 +276,7 @@ def handle_astar(req):
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
-		if current.i_y < height:							# bottom
+		if current.i_y < height - 1:							# bottom
 
 			if currentMap.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x, current.i_y + 1, current)
@@ -289,7 +289,7 @@ def handle_astar(req):
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
-		if current.i_x > 0 and current.i_y < height:		# bottom left
+		if current.i_x > 0 and current.i_y < height - 1:		# bottom left
 
 			if currentMap.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
 
@@ -505,11 +505,7 @@ def addToExpanded(x, y):
 	publishStuff()
 
 def checkFrontier(child):
-
-	print "Entered checkfrontier"
-	if type(frontier_grid.cells[child.i_y * width + child.i_x]) is Point:
-		return True
-	return False
+	return frontier_maarray.mask[child.i_y * width + child.i_x]
 
 
 def checkExpanded(child):
@@ -535,32 +531,12 @@ def publishStuff():
 	# 	unexplored_grid.cells = unexplored_maarray[~unexplored_maarray.mask].data.tolist()
 	# 	pub_unexplored_cell.publish(unexplored_grid)
 	# except NameError:
-	# 	pass
-	# try:
-	# 	path_pub.publish(path)
-	# except NameError:
-	# 	pass
-
-#waypoints stuff
-def calc_waypoints():
-	pass
-	# find out legth of path and multiply it by the resolution
 
 if __name__ == "__main__":
 	global Map
 	global odom_list
 	global pub_expanded_cell
 	global pub_frontier_cell
-	global pub_unexplored_cell 	# not sure if we actually need this?
-	# it needlessly complicates things because
-	# then we need nodes even if they aren't going
-	# to be used.
-
-	# path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
-	
-
-	#rospy.sleep(rospy.Duration(2, 0))
+	global pub_unexplored_cell
 
 	astar_server()
-
-	
