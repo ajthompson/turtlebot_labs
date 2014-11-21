@@ -177,8 +177,6 @@ def handle_astar(req):
 
 	addToFrontier(start_x, start_y)
 
-	# rospy.Timer(rospy.Duration(0.01), timerCallback)
-
 	print "Creating Priority Queues"
 	frontier = PriorityQueue()
 	expanded = PriorityQueue()
@@ -188,9 +186,7 @@ def handle_astar(req):
 	current = Node(0, start_x, start_y, None)
 	frontier.put((0, current))
 
-	print "Entering while loop"
 	while 1 and not rospy.is_shutdown():
-		print "Started loop iteration"
 		try:
 			current = frontier.get()[1]
 		except Empty, e:
@@ -211,107 +207,80 @@ def handle_astar(req):
 
 		# add children to frontier
 		if current.i_x > 0 and current.i_y > 0:				# above left
-
 			if currentMap.data[(current.i_y - 1)*width + (current.i_x - 1)] < 50:	# check if occupied
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
 						frontier.put((0, child))
-						print "3"
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_y > 0:									# above
-
 			if currentMap.data[(current.i_y - 1)*width + current.i_x] < 50:		# check if occupied
-
 				child = Node(current.dist_cost, current.i_x, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "5"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x < width - 1 and current.i_y > 0:			# above right
-
 			if currentMap.data[(current.i_y - 1)*width + current.i_x + 1] < 50:	# check if occupied
-
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y - 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "7"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
-		# rospy.sleep(rospy.Duration(2, 0))
-
 		if current.i_x < width - 1:								# right
-
 			if currentMap.data[current.i_y*width + (current.i_x + 1)] < 50:		# check if occupied
-
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "9"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x < width - 1 and current.i_y < height - 1:	# bottom right
-
 			if currentMap.data[(current.i_y + 1)*width + (current.i_x + 1)] < 50:	# check if occupied
-
 				child = Node(current.dist_cost, current.i_x + 1, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "11"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_y < height - 1:							# bottom
-
 			if currentMap.data[(current.i_y + 1)*width + current.i_x] < 50:		# check if occupied
 				child = Node(current.dist_cost, current.i_x, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
-
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "13"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 
 		if current.i_x > 0 and current.i_y < height - 1:		# bottom left
-
 			if currentMap.data[(current.i_y + 1)*width + (current.i_x - 1)] < 50:	# check if occupied
-
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y + 1, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "15"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
 					addToFrontier(child.i_x, child.i_y)
 	
-	
-
 		if current.i_x > 0:									# left
-
 			if currentMap.data[current.i_y*width + (current.i_x - 1)] < 50:		# check if occupied
-
 				child = Node(current.dist_cost, current.i_x - 1, current.i_y, current)
 				if checkFrontier(child) and checkExpanded(child):
 					if child.i_x == goal_x and child.i_y == goal_y:
-						print "17"
 						frontier.put((0, child))
 					else:
 						frontier.put((child.cost, child))
