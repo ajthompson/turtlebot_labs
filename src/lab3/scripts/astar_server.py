@@ -72,13 +72,21 @@ def handle_astar(req):
 
 	global current
 
+	global Map
+
+	# get the most recent map
+	# Map = None
+
+	# while Map == None and not rospy.is_shutdown():
+	# 	pass
+
 	# Get currentlocation
 	startPose = req.startPose
 	currentPose = startPose
 	# get the map
 	currentMap = Map
 	# get the goal orientation
-	goalPose = req.endPose	
+	goalPose = req.endPose
 
 	# extract the maps metadata
 	resolution = currentMap.info.resolution
@@ -422,7 +430,7 @@ def astar_server():
 
 	s = rospy.Service('calc_astar', Astar, handle_astar)
 
-	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1)
+	map_sub = rospy.Subscriber('/expandedmap', OccupancyGrid, read_map, queue_size=1)
 	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
 	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
 	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
