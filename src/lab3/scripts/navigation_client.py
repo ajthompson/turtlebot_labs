@@ -91,6 +91,19 @@ def calc_astar_client(start_pose, goal_pose):
 	except Empty:
 		print "Unreachable goal position"
 
+def calc_movement(path_new):
+	rospy.wait_for_service('calc_movement')
+	try:
+		calc_movement = rospy.ServiceProxy('calc_movement', Movement)
+		resp2 = calc_Movement(path_new)
+		return resp2
+	except rospy.ServiceException, e:
+		print "Service call failed: %s"%e
+	except TypeError:
+		print "Invalid path"
+	except Empty:
+		print "Path cannot be generated"
+
 
 #Odometry Callback function.
 def read_odometry(msg):
@@ -148,7 +161,7 @@ def timerCallback(event):
 # This is the program's main function
 if __name__ == '__main__':
     # Change this node name to include your username
-    rospy.init_node('smchamberlain_lab3_node')
+    rospy.init_node('navigation_node')
 
 
     # These are global variables. Write "global <variable_name>" in any other function
@@ -204,7 +217,7 @@ if __name__ == '__main__':
     while Map == None and not rospy.is_shutdown():
     	pass
 
-    print "Starting Lab 3"
+    print "Starting Lab 4"
     print "%s" % Map.origin.position.x
     print "%s" % Map.origin.position.y
     
@@ -214,4 +227,4 @@ if __name__ == '__main__':
     compute_path()
     rospy.spin()
 
-    print "Lab 3 complete!"
+    print "Lab 4 complete!"

@@ -1,8 +1,9 @@
+#!/usr/bin/env python
 import math
 import rospy, tf
 import roslib
-from lab3.srv import *
-from lab3 import astar_server
+from lab4.srv import *
+from lab4 import astar_server
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
 import sys, select, termios, tty
@@ -189,7 +190,7 @@ if __name__ == '__main__':
 
     path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
 
-	inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
+    inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
 
     # Use this object to get the robot's Odometry 
     odom_list = tf.TransformListener()
