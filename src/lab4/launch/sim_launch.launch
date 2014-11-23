@@ -1,0 +1,4 @@
+<launch>
+	<!-- start rviz -->
+	<node name="rivz" pkg="rviz" type="rviz" />
+</launch>
