@@ -1,0 +1,7 @@
+nav_msgs/Path path_new
+
+---
+geometry_msgs/PoseStamped robot_pose
+
+
+
