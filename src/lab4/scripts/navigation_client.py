@@ -3,7 +3,7 @@ import math
 import rospy, tf
 import roslib
 from lab4.srv import *
-from lab4 import astar_server
+from lab3 import *
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
 import sys, select, termios, tty
