@@ -11,23 +11,26 @@ from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 import random
 
 #from lab3.srv import *
+# add Odometry data stuff from lab2
 
 # Add additional imports for each of the message types used
 def compute_path():
 
 	global path
-
+	global pose
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
 	# Make sure it doesn't start computation until both start and goal positions exist
+	
 	while (endWhileStart or endWhileGoal) and not rospy.is_shutdown():
 		try:
-			startPose = initialpose
+			print pose
+			startPose = pose # should be current pose
 			endWhileStart = 0
 		except NameError:
-			# print "Start not found"
-			# startPose = None
+			print "Start not found"
+			startPose = None
 			pass
 
 		try:
@@ -58,8 +61,9 @@ def compute_path():
 	while 1 and not rospy.is_shutdown():
 		rospy.sleep(rospy.Duration(0.5))
 		# check if the start or goal has changed
-		if startPose != initialpose:
-			startPose = initialpose
+
+		if startPose != pose:
+			startPose = pose
 			recalc = 1
 		if goalPose != goal:
 			goalPose = goal
@@ -150,7 +154,7 @@ def timerCallback(event):
 # This is the program's main function
 if __name__ == '__main__':
     # Change this node name to include your username
-    rospy.init_node('smchamberlain_lab3_node')
+    rospy.init_node('smchamberlain_lab4_node')
 
 
     # These are global variables. Write "global <variable_name>" in any other function
@@ -210,7 +214,7 @@ if __name__ == '__main__':
     while Map == None and not rospy.is_shutdown():
     	pass
 
-    print "Starting Lab 3"
+    print "Starting Navigation Client"
     print "%s" % Map.origin.position.x
     print "%s" % Map.origin.position.y
     
@@ -220,4 +224,4 @@ if __name__ == '__main__':
     compute_path()
     rospy.spin()
 
-    print "Lab 3 complete!"
+    print "Ending Navigation Client!"
