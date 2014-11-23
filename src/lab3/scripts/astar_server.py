@@ -74,12 +74,6 @@ def handle_astar(req):
 
 	global Map
 
-	# get the most recent map
-	# Map = None
-
-	# while Map == None and not rospy.is_shutdown():
-	# 	pass
-
 	# Get currentlocation
 	startPose = req.startPose
 	currentPose = startPose
