@@ -3,8 +3,8 @@
 	<machine name="robot" address="192.168.1.6" env-loader="/opt/ros/hydro/env.sh" user="hawkeye" password="turtlebot" />
 	<machine name="local" address="localhost" default="true" env-loader="/opt/ros/hydro/env.sh"/>
 	<!-- start remote nodes -->
-	<node name="minimal" pkg="turtlebot_bringup" type="mimimal.launch" machine="robot" />
-	<node name="gmapping" pkg="turtlebot_navigation" type="gmapping_demo.launch" machine="robot" />
+	<!-- <node name="minimal" pkg="turtlebot_bringup" type="mimimal.launch" machine="robot" /> -->
+	<!-- <node name="gmapping" pkg="turtlebot_navigation" type="gmapping_demo.launch" machine="robot" /> -->
 	<!-- start astar server -->
 	<node name="astar" pkg="lab3" type="astar_server.py" />
 	<!-- start obstacle expansion node -->
