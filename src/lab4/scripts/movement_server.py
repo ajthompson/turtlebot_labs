@@ -295,6 +295,9 @@ def follow_path():
 					
 if __name__ == '__main__':
     try:
+        print "Starting Lab 4"
         movement_server()
+        print "Lab4 Complete"
+
     except rospy.ROSInterruptException:
         pass

@@ -186,7 +186,11 @@ if __name__ == '__main__':
 
     converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
    
-    move_base_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
+   #move_base_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
+
+#Replace
+
+    goal_sub = rospy.Subscriber('/astar/goal', OccupancyGrid, moveBaseSimple, queue_size=1)
 
     path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
 
