@@ -6,17 +6,10 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /Static Map1
         - /Robot Footprint1/Status1
-        - /UnexploredGrid1
         - /UnexploredGrid1/Status1
-        - /FrontierGrid1
         - /FrontierGrid1/Status1
-        - /ExpandedGrid1
-        - /Path1
-        - /StartPose1
         - /StartPose1/Status1
-        - /GoalPose1
       Splitter Ratio: 0.496815
     Tree Height: 677
   - Class: rviz/Selection
@@ -140,11 +133,11 @@ Visualization Manager:
       Class: rviz/Pose
       Color: 0; 85; 255
       Enabled: true
-      Head Length: 0.3
-      Head Radius: 0.1
+      Head Length: 1
+      Head Radius: 1
       Name: StartPose
-      Shaft Length: 1
-      Shaft Radius: 0.05
+      Shaft Length: 5
+      Shaft Radius: 0.25
       Shape: Arrow
       Topic: /initialposeconv
       Value: true
@@ -154,13 +147,21 @@ Visualization Manager:
       Class: rviz/Pose
       Color: 255; 25; 0
       Enabled: true
-      Head Length: 0.3
-      Head Radius: 0.1
+      Head Length: 1
+      Head Radius: 1
       Name: GoalPose
-      Shaft Length: 1
-      Shaft Radius: 0.05
+      Shaft Length: 5
+      Shaft Radius: 0.25
       Shape: Arrow
       Topic: /move_base_simple/goal
+      Value: true
+    - Alpha: 0.3
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: ExpandedMap
+      Topic: /expandedmap
       Value: true
   Enabled: true
   Global Options:
@@ -194,11 +195,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 10
+      Scale: 7.36411
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 0
-      Y: 0
+      X: 1.46726
+      Y: -0.80843
     Saved: ~
 Window Geometry:
   Displays:
@@ -216,5 +217,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1855
-  X: 65
-  Y: 24
+  X: 64
+  Y: -1
