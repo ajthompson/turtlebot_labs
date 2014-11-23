@@ -1,0 +1,12 @@
+<launch>
+	<!-- start astar server -->
+	<node name="astar" pkg="lab3" type="astar_server.py" />
+	<!-- start obstacle expansion node -->
+	<node name="expansion" pkg="lab4" type="obstacle_expansion.py" />
+	<!-- start movement server -->
+	<node name="movement" pkg="lab4" type="movement_server.py" />
+	<!-- start rviz -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab4)/../../astar_lab.rviz" />
+	<!-- start navigation client -->
+	<node name="navigation" pkg="lab4" type="navigation_client.py" />
+</launch>

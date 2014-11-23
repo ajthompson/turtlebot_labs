@@ -1,4 +1,9 @@
 <launch>
+	<!-- start pose->posestamped conversion node -->
+	<!-- start obstacle expansion node -->
+	<node name="expansion" pkg="lab4" type="obstacle_expansion.py" />
+	<!-- start map server -->
+	<node name="map_server" pkg="map_server" type="map_server" args="$(find lab4)/../../maps/simple_map.yaml" />
 	<!-- start rviz -->
-	<node name="rivz" pkg="rviz" type="rviz" />
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab4)/../../astar_lab.rviz" />
 </launch>
