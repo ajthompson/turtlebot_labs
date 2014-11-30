@@ -24,30 +24,6 @@ def publishTwist(lin_vel, ang_vel):
 
     pub.publish(twist_msg)		#Send Message
  
-#This function accepts two wheel velocities and a time interval.
-#Note: Clarification was given that u1 and u2 should be phi1 phi2,
-#however permission was given to use this implementation should it already be written.
-def spinWheels(u1, u2, time):
-    global pub
-
-    lin_vel = 0.5 * (u1 + u2)			#Determines the linear velocity of base based on the wheels
-    ang_vel = (1 / .352) * (u1 - u2)		#Determines the angular velocity of base bread on the wheels.
-
-    twist_msg = Twist();			#Creates two messages: a name-maker and a program killer
-    stop_msg = Twist();
-
-    twist_msg.linear.x = lin_vel		#Populate messages with data.
-    twist_msg.angular.z = ang_vel
-    stop_msg.linear.x = 0
-    stop_msg.angular.z = 0
-    
-    #While the specified amount of time has not elapsed, send Twist messages.
-    now = rospy.Time.now().secs
-    while (rospy.Time.now().secs - now <= time and not rospy.is_shutdown()):
-        pub.publish(twist_msg)
-    pub.publish(stop_msg)
-    
-
 #This function accepts a speed and a distance for the robot to move in a straight line
 def driveStraight(speed, distance):
     global odom_list
@@ -120,54 +96,6 @@ def rotate(angle):
 
 
 #This function works the same as rotate how ever it does not publish linear velocities.
-def driveArc(radius, speed, angle):
-    global odom_list
-
-    w = speed / radius
-    v1 = w * (radius + .5*.352)
-    v2 = w * (radius - .5*.352)
-
-    transformer = tf.TransformerROS()	
-    rotation = numpy.array([[math.cos(angle), -math.sin(angle), 0],
-                            [math.sin(angle), math.cos(angle), 0],
-                            [0,          0,          1]])
-    (trans, rot) = odom_list.lookupTransform('odom', 'base_footprint', rospy.Time(0))
-    T_o_t = transformer.fromTranslationRotation(trans, rot)
-    R_o_t = T_o_t[0:3,0:3]
-    goal_rot = numpy.dot(rotation, R_o_t)
-
-    done = False
-    while (not done and not rospy.is_shutdown()):
-        #Gets transforms
-        (trans, rot) = odom_list.lookupTransform('odom', 'base_footprint', rospy.Time(0))
-        state = transformer.fromTranslationRotation(trans, rot)
-        state_rot = state[0:3,0:3]
-
-        #Decides if they are within tolerance or not
-        within_tolerance = abs((state_rot - goal_rot)) < .1
-        if (within_tolerance.all()):
-            spinWheels(0,0,0)
-            done = True
-            print "done"
-        else:
-            if (angle > 0):
-                spinWheels(v1,v2,.1)
-            else:
-                spinWheels(v2,v1,.1)
-
-#This function sequentially calls methods to perform a trajectory.
-#def executeTrajectory():
- #   stepSleep = rospy.Duration(.5)
-  #  driveStraight(.25, .6)
-   # rospy.sleep(stepSleep)
-    #rotate(-90)
-    #rospy.sleep(stepSleep)
-    #driveArc(.25, .1, 180)
-    #rospy.sleep(stepSleep)
-    #rotate(135)
-    #rospy.sleep(stepSleep)
-    #driveStraight(.25, .42)
-
 #Odometry Callback function.
 def readOdom(msg):
     global pose
@@ -183,13 +111,6 @@ def readOdom(msg):
         "odom")
     #odom_tf.sendTransform((pose.pose.position.x, pose,pose.position.y, 0), (pose.pose.orientation.x, pose.pose.orientation.y, \
 #pose.pose.orientation.z, pose.pose.orientation.w), rospy.Time.now(), "base_footprint", "odom")
-
-#Bumper Event Callback function
-def readBumper(msg):
-    if (msg.state == 1):
-        print "Bumper Pressed"
-        rospy.Timer(rospy.Duration(.01), timerCallback)
-        executeTrajectory()
 
 #The timer is used when it is saving data to csv files for analysis.
 def timerCallback(event):
@@ -247,15 +168,12 @@ def follow_path():
             recalc_pub.publish(newMsg)
             print "Subgoal achieved"
         break;
-		
-            
-
-
-					
+		            					
 if __name__ == '__main__':
     try:
         print "Starting Lab 4"
         recalc_pub = Publisher.rospy('/recalc',Recalc) 
+        followPath()
         print "Lab4 Complete"
 
     except rospy.ROSInterruptException:
