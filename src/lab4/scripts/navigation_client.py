@@ -3,6 +3,7 @@ import math
 import rospy, tf
 import roslib
 from lab4.srv import *
+from lab4.msg import *
 from lab3 import *
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
@@ -10,12 +11,33 @@ import sys, select, termios, tty
 from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 import random
 
-#from lab3.srv import *
-# add Odometry data stuff from lab2
+
+def run_navigation():
+	global goal
+	waitForGoal = 1
+
+	while waitForGoal and not rospy.is_shutdown():
+		try:
+			goalPose = goal
+			waitForGoal = 0
+		except NameError:
+			goalPose = None
+			pass
+
+	# Run for first goal
+	compute_path()
+
+	recalc = 0
+	# loop to continue running
+	while 1 and not rospy.is_shutdown():
+		if goalPose != goal:
+			recalc = 1
+		if recalc:
+			# run again
+			compute_path()
 
 # Add additional imports for each of the message types used
 def compute_path():
-
 	global path
 	global pose
     
@@ -58,34 +80,6 @@ def compute_path():
 	path_pub.publish(path)
 	print "Finished calculation"
 
-	recalc = 0
-
-	while 1 and not rospy.is_shutdown():
-		rospy.sleep(rospy.Duration(0.5))
-		# check if the start or goal has changed
-
-		if startPose != initPose:
-			startPose = initPose
-			recalc = 1
-		if goalPose != goal:
-			goalPose = goal
-			recalc = 1
-		if recalc:
-			resp = calc_astar_client(startPose, goalPose)
-			try:
-				path = resp.path
-			except:
-				print "No path could be found"
-			rospy.sleep(rospy.Duration(0.5))
-			path_pub.publish(path)
-			recalc = 0
-
-
-# Add additional imports for each of the message types used
-
-
-#Service Proxy?
-
 def calc_astar_client(start_pose, goal_pose):
 	rospy.wait_for_service('calc_astar')
 	try:
@@ -98,10 +92,6 @@ def calc_astar_client(start_pose, goal_pose):
 		print "Invalid start or goal position"
 	except Empty:
 		print "Unreachable goal position"
-
-
-
-
  
 #Bumper Event Callback function
 def readBumper(msg):
