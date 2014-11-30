@@ -18,6 +18,8 @@ def compute_path():
 
 	global path
 	global pose
+    global initPose
+    initPose = copy.deepcopy(pose)
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -26,7 +28,7 @@ def compute_path():
 	while (endWhileStart or endWhileGoal) and not rospy.is_shutdown():
 		try:
 			print pose
-			startPose = pose # should be current pose
+			startPose = initPose # should be current pose
 			endWhileStart = 0
 		except NameError:
 			print "Start not found"
@@ -62,8 +64,8 @@ def compute_path():
 		rospy.sleep(rospy.Duration(0.5))
 		# check if the start or goal has changed
 
-		if startPose != pose:
-			startPose = pose
+		if startPose != initPose:
+			startPose = initPose
 			recalc = 1
 		if goalPose != goal:
 			goalPose = goal
@@ -98,14 +100,7 @@ def calc_astar_client(start_pose, goal_pose):
 		print "Unreachable goal position"
 
 
-#Odometry Callback function.
-def read_odometry(msg):
-   global pose 	
-   global theta
-   global cpose
-   pose = msg.pose.pose
-   cpose = msg.pose.pose.orientation.z
-   theta = math.asin(cpose)*2
+
 
  
 #Bumper Event Callback function
@@ -133,6 +128,17 @@ def readiPose(msg):
 	convertedPose.header = msg.header
 	convertedPose.pose = msg.pose.pose
 	pose_stamped_pub.publish(convertedPose)
+
+#Odometry Callback function.
+def read_odometry(msg):
+    global pose 
+    global starter	
+    global theta
+    global cpose
+    starter = msg
+    pose = msg.pose.pose
+    cpose = msg.pose.pose.orientation.z
+    theta = math.asin(cpose)*2
 
 def readConvPose(msg):
 	global initialpose
