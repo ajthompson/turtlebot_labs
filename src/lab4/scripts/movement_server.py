@@ -205,52 +205,6 @@ def timerCallback(event):
     euler = tf.transformations.euler_from_quaternion(quaternion)
     theta = euler[2]
 
-
-#Main handler of the project
-def movement_server():
-    global pub
-    global pose
-    global odom_tf
-    global odom_list
-
-    #cmds = [[1, 0], [2, 0], [0.5, 0], [0, 1], [0, 2], [0, 0], [1, 3.14]]
-    
-    rospy.init_node('movement_server')
-    pub = rospy.Publisher('/cmd_vel_mux/input/teleop', Twist)
-    sub = rospy.Subscriber('odom', Odometry, readOdom, queue_size=5)
-    bumper_sub = rospy.Subscriber('/mobile_base/events/bumper', BumperEvent, readBumper)
-    odom_list = tf.TransformListener()
-    odom_tf = tf.TransformBroadcaster()
-
-    movement = rospy.Service('calc_movement', Movement, follow_path)
-
-    if not odom_tf:
-        print "odom_tf not initalized properly. Exiting."
-        return
-    else: 
-        print odom_tf
-
-    odom_tf.sendTransform((0, 0, 0),
-        (0, 0, 0, 1),
-        rospy.Time.now(),
-        "base_footprint",
-        "odom")
-    sleeper = rospy.Duration(1)
-    rospy.sleep(sleeper)
-
-    #driveStraight(.1, 1)
-    #print "Drive straight"
-    #rotate(math.pi/2)
-    #print "Drive rotated"
-    #driveArc(.5, .5, math.pi / 2)
-    #print "Drive Arc'd"
-    #executeTrajectory()
-    rospy.spin()
-    #spinWheels(0.125, .25, 2)
-    rospy.sleep(sleeper)
-    rospy.loginfo("Complete")
-
-
 def adjustOrientation():
     global rotationMatrix
     global angle 
@@ -284,9 +238,14 @@ def follow_path():
         dist=math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
         driveStraight(.5,dist)
         dist=math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
-
+        recalc_msg = Recalc()
+        newMsg = recalc_msg.recalculate 
+        recalc_pub.publish(newMsg)
+        print "Goal not achieved yet"
         if dist < .04:
             path_new.poses.pop
+            recalc_pub.publish(newMsg)
+            print "Subgoal achieved"
         break;
 		
             
@@ -296,7 +255,7 @@ def follow_path():
 if __name__ == '__main__':
     try:
         print "Starting Lab 4"
-        movement_server()
+        recalc_pub = Publisher.rospy('/recalc',Recalc) 
         print "Lab4 Complete"
 
     except rospy.ROSInterruptException:

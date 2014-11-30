@@ -18,8 +18,8 @@ def compute_path():
 
 	global path
 	global pose
-    global initPose
-    initPose = copy.deepcopy(pose)
+    
+    initPose = copy.deepcopy(convertedPose)
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -150,6 +150,9 @@ def moveBaseSimple(msg):
     print "Goal"
     goal = msg
 
+def pose_conv(msg)
+    global convertedPose
+    convertedPose= msg
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
 # Start the timer with the following line of code: 
@@ -205,6 +208,9 @@ if __name__ == '__main__':
     path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
 
     inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
+
+    pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv)
+
 
     # Use this object to get the robot's Odometry 
     odom_list = tf.TransformListener()
