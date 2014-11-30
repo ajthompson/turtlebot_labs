@@ -100,16 +100,6 @@ def calc_astar_client(start_pose, goal_pose):
 		print "Unreachable goal position"
 
 
-
-
- 
-#Bumper Event Callback function
-def readBumper(msg):
-    global buttonPress
-    if (msg.state == 1):
-        # What should happen when the bumper is pressed?
-        buttonPress =1
-
 # Mapping Callback Function
 def readMap(msg):
 
@@ -190,7 +180,6 @@ if __name__ == '__main__':
 
     # Subscribers
     sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
-    bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
     map_sub = rospy.Subscriber('/map', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
     ipose_sub = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, readiPose, queue_size=1)#Callback Function to read initial robot position
     converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
