@@ -18,6 +18,8 @@ def compute_path():
 
 	global path
 	global pose
+    
+    initPose = copy.deepcopy(convertedPose)
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -26,7 +28,7 @@ def compute_path():
 	while (endWhileStart or endWhileGoal) and not rospy.is_shutdown():
 		try:
 			print pose
-			startPose = pose # should be current pose
+			startPose = initPose # should be current pose
 			endWhileStart = 0
 		except NameError:
 			print "Start not found"
@@ -62,8 +64,8 @@ def compute_path():
 		rospy.sleep(rospy.Duration(0.5))
 		# check if the start or goal has changed
 
-		if startPose != pose:
-			startPose = pose
+		if startPose != initPose:
+			startPose = initPose
 			recalc = 1
 		if goalPose != goal:
 			goalPose = goal
@@ -98,14 +100,7 @@ def calc_astar_client(start_pose, goal_pose):
 		print "Unreachable goal position"
 
 
-#Odometry Callback function.
-def read_odometry(msg):
-   global pose 	
-   global theta
-   global cpose
-   pose = msg.pose.pose
-   cpose = msg.pose.pose.orientation.z
-   theta = math.asin(cpose)*2
+
 
  
 #Bumper Event Callback function
@@ -134,6 +129,17 @@ def readiPose(msg):
 	convertedPose.pose = msg.pose.pose
 	pose_stamped_pub.publish(convertedPose)
 
+#Odometry Callback function.
+def read_odometry(msg):
+    global pose 
+    global starter	
+    global theta
+    global cpose
+    starter = msg
+    pose = msg.pose.pose
+    cpose = msg.pose.pose.orientation.z
+    theta = math.asin(cpose)*2
+
 def readConvPose(msg):
 	global initialpose
 	initialpose = msg
@@ -152,6 +158,10 @@ def check_recalc(msg):
 	else:
 		# Do something when we finish
 		pass
+
+def pose_conv(msg)
+    global convertedPose
+    convertedPose= msg
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
 # Start the timer with the following line of code: 
@@ -194,6 +204,7 @@ if __name__ == '__main__':
     ub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
     gridCell_pub = rospy.Publisher('local_costmap/obstacles', GridCells) # Publisher for making grid cells
     point_pub = rospy.Publisher('/point', Point) 
+    pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv)
 
     # Use this object to get the robot's Odometry 
     odom_list = tf.TransformListener()
