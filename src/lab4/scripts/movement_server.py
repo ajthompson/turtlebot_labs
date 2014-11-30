@@ -167,7 +167,7 @@ def follow_path(msg):
         adjustOrientation()
 
         # calculate distance to the waypoint
-        dist=math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
+        dist = math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
 
         if check_path():
             # path is blocked, recalculate
@@ -178,17 +178,18 @@ def follow_path(msg):
         # drive the distance
         driveStraight(.5,dist)
         # calculate error in distance
-        dist=math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
+        dist = math.sqrt((x_pose - wayPointX)**2 + (y_pose - wayPointY)**2)
         print "Goal not achieved yet"
         
         if dist < .04:
             new_pose = path_new.poses.pop()
-            recalc_msg.recalculate = 0
-            recalc_pub.publish(newMsg)
             print "Subgoal achieved"
         else:   # Too much error
             recalc_msg.recalculate = 1
             recalc_pub.publish(recalc_msg)
+
+    recalc_msg.recalculate = 0
+    recalc_pub.publish(newMsg)
 
 def check_path():
     # extract info from the expanded map
