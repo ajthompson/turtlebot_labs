@@ -12,7 +12,7 @@ def readOdom(msg):
 	print "Converted Pose at (%s, %s, %s)" % (convertedPose.pose.position.x, convertedPose.pose.position.y, convertedPose.pose.position.z)
 
 if __name__ == '__main__':
-	rospy.init_node('convert_init_pose')
+	rospy.init_node('convert_odom_to_pose')
 
 	global pub
 
