@@ -4,7 +4,7 @@ import rospy
 from lab4.srv import *
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry,Path,OccupancyGrid
 from kobuki_msgs.msg import BumperEvent
 import tf
 import numpy
@@ -125,6 +125,12 @@ def timerCallback(event):
 
     euler = tf.transformations.euler_from_quaternion(quaternion)
     theta = euler[2]
+def getObstacle(msg)
+
+    global obstacle
+    obstacle= msg
+
+
 
 def adjustOrientation():
     global rotationMatrix
@@ -163,6 +169,7 @@ def follow_path():
         newMsg = recalc_msg.recalculate 
         recalc_pub.publish(newMsg)
         print "Goal not achieved yet"
+        
         if dist < .04:
             path_new.poses.pop
             recalc_pub.publish(newMsg)
@@ -173,7 +180,8 @@ if __name__ == '__main__':
     try:
         print "Starting Lab 4"
         recalc_pub = Publisher.rospy('/recalc',Recalc) 
-        followPath()
+        path_sub = Subscriber.rospy('/path',Path,followPath)
+        obstacle_sub = rospy.Subscriber('/expandedmap', OccupancyGrid, getObstacle)
         print "Lab4 Complete"
 
     except rospy.ROSInterruptException:
