@@ -144,6 +144,14 @@ def moveBaseSimple(msg):
     print "Goal"
     goal = msg
 
+def check_recalc(msg):
+	recalc = msg
+
+	if recalc:
+		compute_path()
+	else:
+		# Do something when we finish
+		pass
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
 # Start the timer with the following line of code: 
@@ -169,36 +177,23 @@ if __name__ == '__main__':
     global accum
     global Map
     global path
-    
-    # Replace the elipses '...' in the following lines to set up the publishers and subscribers the lab requires
 
-    pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
-
-    gridCell_pub = rospy.Publisher('local_costmap/obstacles', GridCells) # Publisher for making grid cells
-
-    point_pub = rospy.Publisher('/point', Point) 
-
+    # Subscribers
     sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
-
     bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
-
     map_sub = rospy.Subscriber('/map', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
- 
     ipose_sub = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, readiPose, queue_size=1)#Callback Function to read initial robot position
-
-    pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
-
     converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
-   
-   #move_base_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
-
-#Replace
-
     goal_sub = rospy.Subscriber('/astar/goal', OccupancyGrid, moveBaseSimple, queue_size=1)
+    recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
 
-    path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
-
+    # publishers
+    pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
     inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
+	path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
+    ub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
+    gridCell_pub = rospy.Publisher('local_costmap/obstacles', GridCells) # Publisher for making grid cells
+    point_pub = rospy.Publisher('/point', Point) 
 
     # Use this object to get the robot's Odometry 
     odom_list = tf.TransformListener()
