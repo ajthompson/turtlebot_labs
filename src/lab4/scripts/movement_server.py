@@ -2,6 +2,7 @@
 
 import rospy
 from lab4.srv import *
+from lab4.msg import *
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry,Path,OccupancyGrid
@@ -273,11 +274,13 @@ def check_path():
             i = min(next_i_x, next_i_y)
             					
 if __name__ == '__main__':
+    rospy.init_node('movement_node')
     try:
         print "Starting Lab 4"
-        recalc_pub = Publisher.rospy('/recalc',Recalc) 
-        path_sub = Subscriber.rospy('/path', Path, followPath)
+        recalc_pub = rospy.Publisher('/recalc',Recalc) 
+        path_sub = rospy.Subscriber('/TrajectoryPlannerROS/global_plan', Path, follow_path)
         obstacle_sub = rospy.Subscriber('/expandedmap', OccupancyGrid, getObstacle)
+        rospy.spin()
         print "Lab4 Complete"
 
     except rospy.ROSInterruptException:

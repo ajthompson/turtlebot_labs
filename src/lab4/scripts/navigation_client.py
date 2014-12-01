@@ -2,15 +2,16 @@
 import math
 import rospy, tf
 import roslib
+import copy
 from lab4.srv import *
 from lab4.msg import *
 from lab3 import *
+from lab4 import *
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
 import sys, select, termios, tty
 from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 import random
-
 
 def run_navigation():
 	global goal
@@ -36,12 +37,16 @@ def run_navigation():
 			# run again
 			compute_path()
 
+def pose_conv(msg):
+	global newPose
+	newPose =msg
+
 # Add additional imports for each of the message types used
 def compute_path():
 	global path
 	global pose
-    
-    initPose = copy.deepcopy(convertedPose)
+	global newPose
+	initPose = copy.deepcopy(newPose)
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -143,9 +148,7 @@ def check_recalc(msg):
 		# Do something when we finish
 		pass
 
-def pose_conv(msg)
-    global convertedPose
-    convertedPose= msg
+
 
 # (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
 # Start the timer with the following line of code: 
@@ -156,61 +159,62 @@ def timerCallback(event):
 # This is the program's main function
 if __name__ == '__main__':
     # Change this node name to include your username
-    rospy.init_node('smchamberlain_lab4_node')
+	rospy.init_node('smchamberlain_lab4_node')
 
 
     # These are global variables. Write "global <variable_name>" in any other function
-    #  to gain access to these global variables
+	#  to gain access to these global variables
 
-    global calc_astar
-    global pub
-    global pose_stamped_pub
-    global pose
-    global odom_tf
-    global odom_list
-    global accum
-    global Map
-    global path
+	global calc_astar
+	global pub
+	global pose_stamped_pub
+	global pose
+	global odom_tf
+	global odom_list
+	global accum
+	global Map
+	global path
 
     # Subscribers
-    sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
-    map_sub = rospy.Subscriber('/map', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
-    ipose_sub = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, readiPose, queue_size=1)#Callback Function to read initial robot position
-    converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
-    goal_sub = rospy.Subscriber('/astar/goal', OccupancyGrid, moveBaseSimple, queue_size=1)
-    recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
+	
+	sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
+	ipose_sub = rospy.Subscriber('/initialpose', PoseWithCovarianceStamped, readiPose, queue_size=1)#Callback Function to read initial robot position
+	converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
+	goal_sub = rospy.Subscriber('/astar/goal', OccupancyGrid, moveBaseSimple, queue_size=1)
+	recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
 
     # publishers
-    pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
-    inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
+	pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
+	inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)
 	path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
-    ub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
-    gridCell_pub = rospy.Publisher('local_costmap/obstacles', GridCells) # Publisher for making grid cells
-    point_pub = rospy.Publisher('/point', Point) 
-    pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv)
+	sub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
+	gridCell_pub = rospy.Publisher('local_costmap/obstacles', GridCells) # Publisher for making grid cells
+	point_pub = rospy.Publisher('/point', Point) 
+	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv)
 
     # Use this object to get the robot's Odometry 
-    odom_list = tf.TransformListener()
+	odom_list = tf.TransformListener()
     
     # Use this command to make the program wait for some seconds
     #rospy.sleep(rospy.Duration(2, 0))
 
-    try:
-    	test = Map
-    except NameError:
-    	Map = None
+	try:
+		test = Map
+	except NameError:
+		Map = None
 
-    while Map == None and not rospy.is_shutdown():
-    	pass
+	while Map == None and not rospy.is_shutdown():
+		pass
 
-    print "Starting Navigation Client"
-    print "%s" % Map.origin.position.x
-    print "%s" % Map.origin.position.y
+	print "Starting Navigation Client"
+	print "%s" % Map.origin.position.x
+	print "%s" % Map.origin.position.y
     
     # Make the robot do stuff...
     #rospy.spin()
     #make_obstacles()
-    compute_path()
-    rospy.spin()
+	run_navigation()
+	rospy.spin()
 
-    print "Ending Navigation Client!"
+	print "Ending Navigation Client!"
