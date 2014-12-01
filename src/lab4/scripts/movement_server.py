@@ -222,6 +222,20 @@ def check_path():
     current_x = init_x
     current_y = init_y
 
+    # set x and y +1 sign
+    if angle >= -math.pi and angle < -math.pi / 2:	# 3rd quadrant
+    	x_p = -1
+    	y_p = -1
+    elif angle >= -math.pi / 2 and angle < 0:		# 4th quadrant
+    	x_p = 1
+    	y_p = -1
+    elif angle >= 0 and angle < math.pi / 2:		# 1st quadrant
+    	x_p = 1
+    	y_p = 1
+    elif angle >= math.pi / 2 and angle <= math.pi:	# 2nd quadrant
+    	x_p = -1
+    	y_p = 1
+
     while 1 and not rospy.is_shutdown():
         new_x = int(floor(i * x_inc + init_x))
         new_y = int(floor(i * y_inc + init_y))
@@ -235,8 +249,8 @@ def check_path():
             return False
         elif new_x == current_x and new_y == current_y:
             # same grid, calculate new i
-            next_i_x = (new_x + 1.0 - init_x) / x_inc
-            next_i_y = (new_y + 1.0 - init_y) / y_inc
+            next_i_x = (new_x + x_p - init_x) / x_inc
+            next_i_y = (new_y + y_p - init_y) / y_inc
 
             i = min(next_i_x, next_i_y)
         elif new_x == current_x and new_y != current_y:
@@ -247,7 +261,7 @@ def check_path():
                 return True
 
             # calculate the new counter value - we already know the next y position
-            next_i_x = (new_x + 1.0 - init_x) / x_inc
+            next_i_x = (new_x + x_p - init_x) / x_inc
             i = min(next_i_x, next_i_y)
         elif new_x != current_x and new_y == current_y:
             current_y = new_y
@@ -257,7 +271,7 @@ def check_path():
                 return True
 
             # calculate the new counter value - we already know the next x position
-            next_i_y = (new_y + 1.0 - init_y) / y_inc
+            next_i_y = (new_y + y_p - init_y) / y_inc
             i = min(next_i_x, next_i_y)
         else:
             # both changed
@@ -268,8 +282,8 @@ def check_path():
                 # cell is occupied, recalculate
                 return True
 
-            next_i_x = (new_x + 1.0 - init_x) / x_inc
-            next_i_y = (new_y + 1.0 - init_y) / y_inc
+            next_i_x = (new_x + x_p - init_x) / x_inc
+            next_i_y = (new_y + y_p - init_y) / y_inc
             i = min(next_i_x, next_i_y)
             					
 if __name__ == '__main__':
