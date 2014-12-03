@@ -45,14 +45,14 @@ def expand_obstacles(map_in):
 
 	for i in range(width):
 		for j in range(height):
-			if new_data[j*width + i] >= 50 and not modified[j*width + i]:
+			if new_data[j*width + i] >= 100 and not modified[j*width + i]:
 				# print "Filling at %s, %s" % (i, j)
 				# calculate the size of the cells x cells box around it
 				for k in range(i - cells, i + cells + 1):
 					for l in range(j - cells, j + cells + 1):
 						if k >= 0 and k < width and l >= 0 and l < height:
 							# print "\tChecking %s, %s" % (k, l)
-							if new_data[l*width + k] < 50 and not modified[l*width + k]:
+							if new_data[l*width + k] < 100 and not modified[l*width + k]:
 								# print "\t\tAdding at %s*%s+%s" % (l, width, k)
 								new_data[l*width + k] = 100
 								modified[l*width + k] = 1
@@ -99,8 +99,8 @@ if __name__ == '__main__':
 	global unexpanded
 	global current_map
 
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1) #Callback function to handle mapping
-	update_sub = rospy.Subscriber('/move_base/global_costmap/costmap_updates', OccupancyGridUpdate, update_map, queue_size=1)
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1) #Callback function to handle mapping original /move_base/global_costmap/costmap
+	update_sub = rospy.Subscriber('/map_updates', OccupancyGridUpdate, update_map, queue_size=1) # original /move_base/global_costmap/costmap_updates
 	expanded_pub = rospy.Publisher('/expandedmap', OccupancyGrid)
 
 	rospy.spin()

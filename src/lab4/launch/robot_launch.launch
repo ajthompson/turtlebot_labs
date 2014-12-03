@@ -1,4 +1,6 @@
 <launch>
+    <!-- start pose conversion node -->
+    <node name="convert_odom_to_pose" pkg="lab4" type="convert_odom_to_pstamped.py" />
 	<!-- start astar server -->
 	<node name="astar" pkg="lab3" type="astar_server.py" />
 	<!-- start obstacle expansion node -->
