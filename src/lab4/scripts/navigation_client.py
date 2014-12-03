@@ -144,11 +144,11 @@ def moveBaseSimple(msg):
 def check_recalc(msg):
 	recalc = msg
 
-	if recalc:
+	if recalc.recalculate == 1:
 		compute_path()
 	else:
-		# Do something when we finish
-		pass
+		print "NAVIGATION COMPLETE"
+		print "\tREADY FOR NEW GOAL"
 
 
 
