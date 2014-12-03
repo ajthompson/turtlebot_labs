@@ -16,7 +16,7 @@ import random
 def compute_path():
 
 	global path
-
+	
 	print "Entering loop to wait for positions"
 	endWhileStart = 1
 	endWhileGoal = 1
@@ -127,6 +127,7 @@ def make_obstacles():
 #Service Proxy?
 
 def calc_astar_client(start_pose, goal_pose):
+
 	rospy.wait_for_service('calc_astar')
 	try:
 		calc_astar = rospy.ServiceProxy('calc_astar', Astar)
@@ -232,7 +233,7 @@ if __name__ == '__main__':
 
     converted_sub = rospy.Subscriber('/initialposeconv', PoseStamped, readConvPose, queue_size=1)
    
-    move_base_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
+    move_base_sub = rospy.Subscriber('/move_base_simple/goal', PoseStamped, moveBaseSimple, queue_size=1)#Callback Function to move base?
 
     path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
 
