@@ -1,16 +1,16 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(lab4)
+project(final)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS 
+find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   message_generation
   geometry_msgs
   nav_msgs
-)
+  )
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -46,16 +46,16 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-add_message_files(
-	FILES
-	Recalc.msg
-)
+# add_message_files(
+#   FILES
+#   Message1.msg
+#   Message2.msg
+# )
 
-## Generate services in the 'srv' folder
+# Generate services in the 'srv' folder
 add_service_files(
-    FILES
-    Movement.srv
-  
+  FILES
+  Frontier.srv
 )
 
 ## Generate actions in the 'action' folder
@@ -84,8 +84,8 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES lab3
- CATKIN_DEPENDS rospy message_runtime
+#  LIBRARIES final
+  CATKIN_DEPENDS rospy message_runtime
 #  DEPENDS system_lib
 )
 
@@ -95,24 +95,22 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-)
+# include_directories(include)
 
 ## Declare a cpp library
-# add_library(lab3
-#   src/${PROJECT_NAME}/lab3.cpp
+# add_library(final
+#   src/${PROJECT_NAME}/final.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(lab3_node src/lab3_node.cpp)
+# add_executable(final_node src/final_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(lab3_node lab3_generate_messages_cpp)
+# add_dependencies(final_node final_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(lab3_node
+# target_link_libraries(final_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -131,7 +129,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS lab3 lab3_node
+# install(TARGETS final final_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -156,7 +154,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_lab3.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_final.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
