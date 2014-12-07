@@ -203,69 +203,69 @@ def process_cell(x, y):
 	on_frontier = 0
 	bordering_frontiers = list()
 
-	if x > 0 and y > 0:											# top left
-		check = data[(y - 1) * width + (x - 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if y > 0:													# top
-		check = data[(y - 1) * width + x]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if x < width - 1 and y > 0:									# top right
-		check = data[(y - 1) * width + (x + 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if x < width - 1:											# right
-		check = data[y * width + (x + 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if x < width - 1 and y < height - 1:						# bottom right
-		check = data[(y + 1) * width + (x + 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if y < height - 1:											# bottom
-		check = data[(y + 1) * width + x]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if x > 0 and y < height + 1:								# bottom left
-		check = data[(y + 1) * width + (x - 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
-	if x > 0:													# left
-		check = data[y * width + (x - 1)]
-		if check < -1 and check not in bordering_frontiers:		# preexisting frontier
-			bordering_frontiers.append(-check)
-		elif check < OCCUPIED_THRESHOLD:						# on frontier
-			on_frontier = 1
+	if data[y * width + x] <= -1:
+		if x > 0 and y > 0:											# top left
+			check = data[(y - 1) * width + (x - 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if y > 0:													# top
+			check = data[(y - 1) * width + x]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if x < width - 1 and y > 0:									# top right
+			check = data[(y - 1) * width + (x + 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if x < width - 1:											# right
+			check = data[y * width + (x + 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if x < width - 1 and y < height - 1:						# bottom right
+			check = data[(y + 1) * width + (x + 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if y < height - 1:											# bottom
+			check = data[(y + 1) * width + x]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if x > 0 and y < height + 1:								# bottom left
+			check = data[(y + 1) * width + (x - 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
+		if x > 0:													# left
+			check = data[y * width + (x - 1)]
+			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+				bordering_frontiers.append(-check)
+			elif check < OCCUPIED_THRESHOLD:						# on frontier
+				on_frontier = 1
 
-	if data[y * width + x] == -1:								# unexplored cell
-		if on_frontier:											# on frontier, so fill in
-			if len(bordering_frontiers) == 0:					# make new frontier
-				data[y * width + x] = -frontier_counter
-				new_frontier = Frontier(frontier_counter, x, y)
-				frontier_counter++;
-			elif len(bordering_frontiers) == 1:					# only one bordering, add to frontier
-				data[y * width + x] = -bordering_frontiers.pop(0)
-				new_frontier = Frontier(-data[y * width + x], x, y)
-				frontiers[frontiers.index(new_frontier)].merge(new_frontier)
-			else:												# multiple bordering, check if merged
-				merged_frontier = merge_frontiers(bordering_frontiers)
-				data[y * width + x] = -merged_frontier.f_ids[0]
-				frontiers.append(merged_frontier)
+	if on_frontier:											# on frontier, so fill in
+		if len(bordering_frontiers) == 0:					# make new frontier
+			data[y * width + x] = -frontier_counter
+			new_frontier = Frontier(frontier_counter, x, y)
+			frontier_counter++;
+		elif len(bordering_frontiers) == 1:					# only one bordering, add to frontier
+			data[y * width + x] = -bordering_frontiers.pop(0)
+			new_frontier = Frontier(-data[y * width + x], x, y)
+			frontiers[frontiers.index(new_frontier)].merge(new_frontier)
+		else:												# multiple bordering, check if merged
+			merged_frontier = merge_frontiers(bordering_frontiers)
+			data[y * width + x] = -merged_frontier.f_ids[0]
+			frontiers.append(merged_frontier)
 
 def merge_frontiers(nums):
 	to_merge = list()
