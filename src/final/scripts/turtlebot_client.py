@@ -120,6 +120,18 @@ def calc_astar_client(start_pose, goal_pose):
 	except TypeError:
 		print "Invalid start or goal position"
 
+def calc_frontier_client(frontiers):
+	rospy.wait_for_service('calc_frontier')
+	try:
+		calc_astar = rospy.ServiceProxy('calc_frontier', Frontier)
+		resp1 = calc_frontier(frontiers)
+		return resp1
+	except rospy.ServiceException, e:
+		print "Service call failed: %s"%e
+	except TypeError:
+		print "Invalid start or goal position"
+
+
 # Mapping Callback Function
 def readMap(msg):
 
