@@ -196,6 +196,7 @@ if __name__ == '__main__':
 	goal_sub = rospy.Subscriber('/astar/goal', PoseStamped, moveBaseSimple, queue_size=1)
 	recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
 
+
 	# publishers
 	pose_stamped_pub = rospy.Publisher('/initialposeconv', PoseStamped)
 	inflated_ob_pub = rospy.Publisher('local_costmap/unknown_space',GridCells)

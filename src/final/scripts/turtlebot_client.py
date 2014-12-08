@@ -3,7 +3,6 @@ import math
 import rospy, tf
 import roslib
 import copy
-from lab4.srv import *
 from lab4.msg import *
 from lab3.srv import *
 from kobuki_msgs.msg import BumperEvent
@@ -12,7 +11,6 @@ import sys, select, termios, tty
 from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 from move_base_msgs import MoveBaseActionFeedback
 from actionlib_msgs import GoalStatusArray
-import random
 from lab4 import*
 #spin
 #frontiers
@@ -134,7 +132,6 @@ def calc_frontier_client(frontiers):
 
 # Mapping Callback Function
 def readMap(msg):
-
 	global Map
 
 	Map = msg.info
@@ -143,16 +140,9 @@ def readMap(msg):
 	print Map.width
 	print Map.resolution
 
-#Initial Position Callback Function to send start points to robot
-def readiPose(msg):
-	print "Converting Pose"
-	convertedPose = PoseStamped()
-	convertedPose.header = msg.header
-	convertedPose.pose = msg.pose.pose
-	pose_stamped_pub.publish(convertedPose)
-
 #Odometry Callback function.
 def read_odometry(msg):
+
 	global pose 
 	global starter	
 	global theta
@@ -183,19 +173,18 @@ def check_recalc(msg):
 		print "\tREADY FOR NEW GOAL"
 
 def feedback(msg):
-
 	global turtle_feedback
 	print "Received Feedback"
 	turtle_feedback= msg
 
 def status(msg):
-
 	global turtle_status
 	print "Status Received"
 	turtle_status = msg
 
 #Bumper Event Callback function
 def readBumper(msg):
+
     global buttonPress
     if (msg.state == 1):
         # What should happen when the bumper is pressed?
@@ -210,7 +199,7 @@ def timerCallback(event):
 # This is the program's main function
 if __name__ == '__main__':
 	# Change this node name to include your username
-	rospy.init_node('smchamberlain_lab4_node')
+	rospy.init_node('turtlebot_client_node')
 
 
 	# These are global variables. Write "global <variable_name>" in any other function
@@ -232,15 +221,24 @@ if __name__ == '__main__':
 	# Subscribers
 	
 	odom_sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
+
 	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
+
 	feedback_sub = rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback,feedback,queue_size=1)
+
 	status_sub = rospy.Subscriber('/move_base/status', GoalStatusArray, status,queue_size=1)
+
 	bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
+
+	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv, queue_size=1)
+
+	recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
 
 	# publishers
 	path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
+
 	twist_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
-	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv, queue_size=1)
+	
 
 	# Use this object to get the robot's Odometry 
 	odom_list = tf.TransformListener()
