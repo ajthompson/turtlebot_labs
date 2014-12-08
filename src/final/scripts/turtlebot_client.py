@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 import math
-import rospy, tf
-import roslib
+import rospy
 import copy
-from lab4.msg import *
 from lab3.srv import *
+from final.srv import *
 from kobuki_msgs.msg import BumperEvent
-from geometry_msgs.msg import Twist, PoseWithCovarianceStamped, PoseStamped,Point
-import sys, select, termios, tty
-from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
-from move_base_msgs import MoveBaseActionFeedback
-from actionlib_msgs import GoalStatusArray
-from lab4 import*
+from geometry_msgs.msg import Twist, PoseStamped
+from nav_msgs.msg import Odometry, Path
+from move_base_msgs import MoveBaseActionFeedback, MoveBaseActionGoal
+from actionlib_msgs import GoalStatusArray, GoalStatus
 #spin
 #frontiers
 #astar
@@ -21,45 +18,31 @@ from lab4 import*
 
 #Service Proxy?
 
-global buttonPress
-buttonPress=0
+def run_navigation(bumper):
+	global finished
+	global goal_counter
+	global centroids
 
-def run_navigation():
-	global goal
-	waitForGoal = 1
+	goal_counter += 1
 
-	print "Waiting for goal"
-	while waitForGoal and not rospy.is_shutdown():
-		try:
-			goalPose = copy.deepcopy(goal)
-			waitForGoal = 0
-			print "Goal location found"
-		except NameError:
-			goalPose = None
-			pass
+	# spin if not the bumper
+	if not bumper:
+		rotate(2 * math.pi)
 
-	# Run for first goal
-	compute_path()
+	# calculate the frontiers
+	centroids = calc_frontier_client().centroids
 
-	recalc = 0
-	# loop to continue running
-	while 1 and not rospy.is_shutdown():
-		if buttonPress:
-			recalc=1
-			rotate(math.pi)
-			buttonPress = 0	
-		
-		if goalPose.pose.position.x != goal.pose.position.x or goalPose.pose.position.y != goal.pose.position.y:
-			goalPose = copy.deepcopy(goal)
-			recalc = 1
-			
-		if recalc:
-			# run again
-			compute_path()
-
-def pose_conv(msg):
-	global newPose
-	newPose = msg
+	if len(centroids) > 0:
+		# get the first centroid
+		first = centroids.pop(0)
+		# create a goal
+		goal = MoveBaseActionGoal()
+		goal.header = first.header
+		goal.goal_id.id = "Goal%s" % goal_counter
+		goal.goal.target_pose = first
+		goal_pub.publish(goal)
+	else:	# there are no reachable centroids
+		finished = 1
 
 # Add additional imports for each of the message types used
 def compute_path():
@@ -118,142 +101,130 @@ def calc_astar_client(start_pose, goal_pose):
 	except TypeError:
 		print "Invalid start or goal position"
 
-def calc_frontier_client(frontiers):
+def calc_frontier_client():
 	rospy.wait_for_service('calc_frontier')
 	try:
 		calc_astar = rospy.ServiceProxy('calc_frontier', Frontier)
-		resp1 = calc_frontier(frontiers)
+		resp1 = calc_frontier()
 		return resp1
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
 	except TypeError:
 		print "Invalid start or goal position"
 
+def rotate(angle):
+    print "Begin to rotate"
+    global odom_list
+    global pose
+    
 
-# Mapping Callback Function
-def readMap(msg):
-	global Map
+    global accum
+    rate = rospy.Rate(100)
+ 
+    twist=Twist()
+    #startpose=pose
+    accum= 0
+    speed = .5
+    last = theta_from_quat(pose)
+    if angle < 0:
+        angle = angle * -1
+        speed = speed * -1
+    # while math.fabs(pose.orientation.z - startpose.orientation.z) < angle and not rospy.is_shutdown():  
+    while accum < angle and not rospy.is_shutdown():
+        accum=accum + math.fabs(theta_from_quat(pose) - last)
+       
+        #print accum
+        last = theta_from_quat(pose)
+        if (abs(accum - angle) < 0.5):
+            twist.angular.z = speed / 2
+        else:
+            twist.angular.z = speed
+        pub.publish(twist)
+        rate.sleep()
+    twist.angular.z = 0
+    pub.publish(twist)
 
-	Map = msg.info
-	
-	print Map.height
-	print Map.width
-	print Map.resolution
-
-#Odometry Callback function.
-def read_odometry(msg):
-
-	global pose 
-	global starter	
-	global theta
-	global cpose
-	starter = msg
-	pose = msg.pose.pose
-	cpose = msg.pose.pose.orientation.z
-	theta = math.asin(cpose)*2
-
-def readConvPose(msg):
-	global initialpose
-	initialpose = msg
-
-#Move Base Simple Callback Function to send endpoints to robot
-def moveBaseSimple(msg):
-	global goal
-	print "Goal"
-	goal = msg
-	compute_path()
-
-def check_recalc(msg):
-	recalc = msg
-
-	if recalc.recalculate == 1:
-		compute_path()
-	else:
-		print "NAVIGATION COMPLETE"
-		print "\tREADY FOR NEW GOAL"
+def pose_conv(msg):
+	global newPose
+	newPose = msg
 
 def feedback(msg):
 	global turtle_feedback
-	print "Received Feedback"
 	turtle_feedback= msg
 
 def status(msg):
 	global turtle_status
-	print "Status Received"
 	turtle_status = msg
+
+def result(msg):
+	global centroids
+	turtle_result = msg
+	result_status = turtle_result.status
+
+	# determine what to do dependant on the status given in the message
+	# A lot of these are the same, but they may change if the nav stack is found to not
+	# be good enough. Only check if goal id matches counter
+	if result_status.goal_id.id == goal_counter:
+		if result_status.status == GoalStatus.PENDING:		# The goal has not yet been processed by server
+			print "Goal %s pending" % goal_counter
+		elif result_status.status == GoalStatus.ACTIVE:		# Goal is currently being executed
+			print "Goal %s active"
+		elif result_status.status == GoalStatus.PREEMPTED:	# The goal was canceled during execution
+			print "Goal %s preempted" % goal_counter
+			run_navigation(False)
+		elif result_status.status == GoalStatus.SUCCEEDED:	# The goal was reached
+			print "Goal %s reached" % goal_counter
+			run_navigation(False)
+		elif result_status.status == GoalStatus.ABORTED:	# The goal was aborted (Stuck/fail to reach)
+			print "Goal %s aborted" % goal_counter
+			run_navigation(False)
+		elif result_status.status == GoalStatus.REJECTED:	# The goal was determined unreachable by the nav stack
+			print "Goal %s rejected" % goal_counter
+			run_navigation(False) 
+		elif result_status.status == GoalStatus.PREEMPTING:	# The goal received a cancel request during execution
+			print "Goal %s preempting" % goal_counter
+		elif result_status.status == GoalStatus.RECALLING:	# Request to cancel received, not confirmed as dead
+			print "Goal %s recalling" % goal_counter
+		elif result_status.status == GoalStatus.RECALLED:	# Goal successfully canceled before execution
+			print "Goal %s recalled" % goal_counter
+		elif result_status.status == GoalStatus.LOST:		# Goal lost, shouldn't occur ever
+			print "Goal %s lost" % goal_counter
+			print "\tSomeone ignored the documentation..."
 
 #Bumper Event Callback function
 def readBumper(msg):
-
-    global buttonPress
-    if (msg.state == 1):
-        # What should happen when the bumper is pressed?
-        buttonPress =1
-
-# (Optional) If you need something to happen repeatedly at a fixed interval, write the code here.
-# Start the timer with the following line of code: 
-#   rospy.Timer(rospy.Duration(.01), timerCallback)
-def timerCallback(event):
-	pass # Delete this 'pass' once implemented
+    # run_navigation(True)
 
 # This is the program's main function
 if __name__ == '__main__':
 	# Change this node name to include your username
 	rospy.init_node('turtlebot_client_node')
 
-
-	# These are global variables. Write "global <variable_name>" in any other function
-	#  to gain access to these global variables
-
-	global calc_astar
-	global turtle_status
-	global turtle_feedback
-	global pub
-	global pose_stamped_pub
-	global pose
-	global odom_tf
-	global odom_list
-	global accum
-	global Map
-	global path
+	global finished
 	global path_pub
-
-	# Subscribers
-	
-	odom_sub = rospy.Subscriber('/odom', Odometry, read_odometry, queue_size=1) # Callback function to read in robot Odometry messages
-
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, readMap, queue_size=1) #Callback function to handle mapping
-
-	feedback_sub = rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback,feedback,queue_size=1)
-
-	status_sub = rospy.Subscriber('/move_base/status', GoalStatusArray, status,queue_size=1)
-
-	bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
-
-	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv, queue_size=1)
-
-	recalc_sub = rospy.Subscriber('/recalc', Recalc, check_recalc, queue_size=1)
+	global twist_pub
+	global goal_counter
 
 	# publishers
-	path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
-
+	# path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
+	goal_pub = rospy.Publisher('/move_base/goal')
 	twist_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
+
+	# Subscribers
+	feedback_sub = rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback,feedback, queue_size=1)
+	status_sub = rospy.Subscriber('/move_base/status', GoalStatusArray, status, queue_size=1)
+	result_sub = rospy.Subscriber('/move_base/result', MoveBaseActionResult, result, queue_size=1)
+	bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
+	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv, queue_size=1)
+
+	print "Turtlebot SLAM Begin"
+	finished = 0
+	goal_counter = -1
+	run_navigation(False)
 	
+	# wait for the program to finish
+	while not finished and not rospy.is_shutdown():
+		rospy.sleep(rospy.Duration(1))
 
-	# Use this object to get the robot's Odometry 
-	odom_list = tf.TransformListener()
-	
-	# Use this command to make the program wait for some seconds
-	#rospy.sleep(rospy.Duration(2, 0))
-
-	try:
-		test = Map
-	except NameError:
-		Map = None
-
-	while Map == None and not rospy.is_shutdown():
-		pass
-
-	print "Starting turtlebot_client"
-	
-	print "Ending turtlebot_client!"
+	print "Turtlebot SLAM is complete"
+	print "EXITING"
