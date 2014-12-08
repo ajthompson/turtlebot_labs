@@ -19,7 +19,6 @@ from actionlib_msgs import GoalStatusArray, GoalStatus
 #Service Proxy?
 
 def run_navigation(bumper):
-	global finished
 	global goal_counter
 	global centroids
 
@@ -31,6 +30,13 @@ def run_navigation(bumper):
 
 	# calculate the frontiers
 	centroids = calc_frontier_client().centroids
+	publish_goal()
+
+# Removes the first centroid from the list and publishes as a goal
+# If the list is empty, finish the program
+def publish_goal():
+	global centroids
+	global finished
 
 	if len(centroids) > 0:
 		# get the first centroid
@@ -65,7 +71,6 @@ def compute_path():
 			print "Start not found"
 			startPose = None
 			pass
-
 		try:
 			goalPose = goal
 			endWhileGoal = 0
@@ -139,7 +144,7 @@ def rotate(angle):
             twist.angular.z = speed / 2
         else:
             twist.angular.z = speed
-        pub.publish(twist)
+        twist_pub.publish(twist)
         rate.sleep()
     twist.angular.z = 0
     pub.publish(twist)
@@ -167,28 +172,39 @@ def result(msg):
 	if result_status.goal_id.id == goal_counter:
 		if result_status.status == GoalStatus.PENDING:		# The goal has not yet been processed by server
 			print "Goal %s pending" % goal_counter
+			print result_status.text
 		elif result_status.status == GoalStatus.ACTIVE:		# Goal is currently being executed
 			print "Goal %s active"
+			print result_status.text
 		elif result_status.status == GoalStatus.PREEMPTED:	# The goal was canceled during execution
 			print "Goal %s preempted" % goal_counter
+			print result_status.text
 			run_navigation(False)
 		elif result_status.status == GoalStatus.SUCCEEDED:	# The goal was reached
 			print "Goal %s reached" % goal_counter
+			print result_status.text
 			run_navigation(False)
 		elif result_status.status == GoalStatus.ABORTED:	# The goal was aborted (Stuck/fail to reach)
 			print "Goal %s aborted" % goal_counter
+			print result_status.text
 			run_navigation(False)
 		elif result_status.status == GoalStatus.REJECTED:	# The goal was determined unreachable by the nav stack
 			print "Goal %s rejected" % goal_counter
-			run_navigation(False) 
+			print result_status.text
+			# Check the other frontiers in the frontier list
+			publish_goal()
 		elif result_status.status == GoalStatus.PREEMPTING:	# The goal received a cancel request during execution
 			print "Goal %s preempting" % goal_counter
+			print result_status.text
 		elif result_status.status == GoalStatus.RECALLING:	# Request to cancel received, not confirmed as dead
 			print "Goal %s recalling" % goal_counter
+			print result_status.text
 		elif result_status.status == GoalStatus.RECALLED:	# Goal successfully canceled before execution
 			print "Goal %s recalled" % goal_counter
+			print result_status.text
 		elif result_status.status == GoalStatus.LOST:		# Goal lost, shouldn't occur ever
 			print "Goal %s lost" % goal_counter
+			print result_status.text
 			print "\tSomeone ignored the documentation..."
 
 #Bumper Event Callback function
