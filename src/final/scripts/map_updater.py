@@ -10,6 +10,7 @@ def read_map(msg):
 	global updated_pub
 	current_map = copy.deepcopy(msg)
 	updated_pub.publish(current_map)
+	print "Published map"
 
 def update_map(msg):
 	global current_map
@@ -49,6 +50,7 @@ def update_map(msg):
 
 	updated_map.data = new_data
 	updated_pub.publish(updated_map)
+	print "Published update"
 
 if __name__ == '__main__':
 	rospy.init_node('map_updater')
@@ -56,3 +58,6 @@ if __name__ == '__main__':
 	updated_pub = rospy.Subscriber('move_base/global_costmap/updated_costmap', OccupancyGrid)
 	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1)
 	update_sub = rospy.Subscriber('/move_base/global_costmap/costmap_updates', OccupancyGridUpdate, update_map, queue_size=1)
+
+	print "Started Map Updater"
+	rospy.spin()
