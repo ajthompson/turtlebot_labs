@@ -12,6 +12,15 @@ import sys, select, termios, tty
 from nav_msgs.msg import Odometry,OccupancyGrid,GridCells,Path
 import random
 
+#spin
+#frontiers
+#astar
+#piblish message
+
+# bumper spin and recalulate
+
+#Service Proxy?
+
 def run_navigation():
 	global goal
 	waitForGoal = 1
