@@ -176,7 +176,7 @@ def frontier_server():
 	OCCUPIED_THRESHOLD = 50
 
 	# subscribers
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1) # original /move_base/global_costmap/costmap
+	map_sub = rospy.Subscriber('/move_base/global_costmap/updated_costmap', OccupancyGrid, read_map, queue_size=1) # original /move_base/global_costmap/costmap
 
 	# create service
 	s = rospy.Service('calc_frontiers', Frontier, handle_frontiers)

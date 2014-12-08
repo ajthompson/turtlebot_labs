@@ -406,7 +406,7 @@ def astar_server():
 
 	s = rospy.Service('calc_astar', Astar, handle_astar)
 
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1)
+	map_sub = rospy.Subscriber('/move_base/global_costmap/updated_costmap', OccupancyGrid, read_map, queue_size=1)
 	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
 	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
 	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
