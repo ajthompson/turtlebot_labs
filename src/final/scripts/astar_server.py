@@ -324,24 +324,6 @@ def getPath(goal_x,goal_y,start_x,start_y):
 	# 7 6 5
 	direction = 0
 	
-	# start_path_new = PoseStamped()# set up array of posestamped objects
-	# start_path_new.pose.position.x= start_x
-	# start_path_new.pose.position.y= start_y
-
-	# goal_path_new = PoseStamped()
-	# goal_path_new.pose.position.x= goal_x
-	# goal_path_new.pose.position.y= goal_y
- #    # start at the goal and follow the parent chain to the beginning
-	# path_new.poses.append(goal_path_new)
-
-	# while goal_path_new!= start_path_new and current_node.parent != None and not rospy.is_shutdown():
-	# 	parent_path_new = PoseStamped()
-	# 	parent_path_new.pose.position.x = current_node.parent.i_x
-	# 	parent_path_new.pose.position.y = current_node.parent.i_y
-	# 	current_node = current_node.parent
-	# 	up = parent_path_new
-	# 	path_new.poses.append(up)
-	# 	goal_path_new = up
 
 	pose = PoseStamped()
 	pose.header.frame_id = 'map'
@@ -424,7 +406,7 @@ def astar_server():
 
 	s = rospy.Service('calc_astar', Astar, handle_astar)
 
-	map_sub = rospy.Subscriber('/expandedmap', OccupancyGrid, read_map, queue_size=1)
+	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1)
 	pub_expanded_cell = rospy.Publisher('/astar/expanded', GridCells)
 	pub_frontier_cell = rospy.Publisher('/astar/frontier', GridCells)
 	pub_unexplored_cell = rospy.Publisher('/astar/unexplored', GridCells)
