@@ -30,10 +30,10 @@ class Cell:
 		return "(%s, %s)" % (self.x, self.y)
 
 	def x_to_meters(self):
-		return float(self.x * resolution + offsetPose.position.x)
+		return float(self.x * resolution + offsetPose.position.x - resolution / 2)
 
 	def y_to_meters(self):
-		return float(self.y * resolution + offsetPose.position.y)
+		return float(self.y * resolution + offsetPose.position.y - resolution / 2)
 
 # contains the list of frontier ids and the list of cells contained on this frontier
 class _Frontier:
@@ -52,9 +52,10 @@ class _Frontier:
 		if DEBUG:
 			self.gridcells = GridCells()
 			self.gridcells.header.frame_id = 'map'
+			self.gridcells.cell_width = resolution
+			self.gridcells.cell_height = resolution
 			self.publisher = rospy.Publisher('/frontiers/f%s' % f_id, GridCells)
 		self.add_cell(first_cell_x, first_cell_y)
-
 
 	# overload equality method
 	def __eq__ (self, other):
@@ -84,9 +85,9 @@ class _Frontier:
 		for j in self.cells:
 			cells += "%s " % j
 		cells += "\n"
-		gridcells = "\tGridCells"
+		gridcells = "\tGridCells\n"
 		gridcells += str(self.gridcells)
-		return title + ids + cells
+		return title + ids + cells + gridcells
 
 	# adds a cell 
 	def add_cell(self, x, y):
@@ -94,15 +95,12 @@ class _Frontier:
 		if not new_cell in self.cells:
 			self.cells.append(new_cell)
 			if DEBUG:	# add gridcell and publish if in debug mode
-				new_point = Point()
-				new_point.x = x * resolution + offsetPose.position.x
-				new_point.y = y * resolution + offsetPose.position.y
-				new_point.z = 0
-				self.gridcells.cells.append(new_point)
+				self.gridcells.cells.append(Point(x * resolution + offsetPose.position.x + resolution / 2, y * resolution + offsetPose.position.y + resolution / 2, 0))
 				self.publish()
 		self.size += 1
 		if DEBUG:
-			print self
+			pass
+			# print self
 
 	def merge(self, other):
 		overlap_counter = 0
@@ -114,9 +112,12 @@ class _Frontier:
 		# merge the cells
 		for new_cell in other.cells:
 			if new_cell not in self.cells:
-				self.cells.append(new_cell)
+				self.add_cell(new_cell.x, new_cell.y)
 			else:
 				overlap_counter += 1
+
+		# add the sizes
+		self.size += other.size - overlap_counter
 
 		# when in debug mode, merge the gridcells and publish
 		if DEBUG:
@@ -125,31 +126,33 @@ class _Frontier:
 					self.gridcells.cells.append(gridcell)
 			self.publish()
 
-		# add the sizes
-		self.size += other.size - overlap_counter
-
 	def centroid(self):
 		sum_x = 0
 		sum_y = 0
-		length = len(self.cells)
+		num_cells = 0
 
 		for c in self.cells:
 			sum_x += c.x_to_meters()
 			sum_y += c.y_to_meters()
+			num_cells += 1
 
-		cent_x = sum_x / length
-		cent_y = sum_y / length
+		cent_x = sum_x / num_cells
+		cent_y = sum_y / num_cells
 
 		newPose = PoseStamped()
 		newPose.header.frame_id = 'map'
-		newPose.pose.position.x = cent_x
-		newPose.pose.position.y = cent_y
+		newPose.pose.position.x = cent_x + resolution / 2 # add resolution b/c of some
+		newPose.pose.position.y = cent_y + resolution / 2 # weird off-by-one error
 		return newPose
 
 	if DEBUG:
 		# publishes the frontier
 		def publish(self):
-			self.publisher.publish(self.gridcells)
+			if len(self.gridcells.cells) == 1:
+				if frontiers.count(self) == 1:	
+					self.publisher.publish(self.gridcells)
+			else:
+				self.publisher.publish(self.gridcells)
 
 def frontier_server():
 	rospy.init_node('frontier_server')
@@ -233,8 +236,28 @@ def handle_frontiers(req):
 		for j in range(height):
 			process_cell(i, j)
 
+	print "Final frontier count: %s" % len(frontiers)
+
+	if DEBUG:
+		rospy.sleep(rospy.Duration(0.1))
+		for i in frontiers:
+			i.publish()
+
 	# calculate centroids
 	centroids = calc_centroids(frontiers)
+	centroid_publishers = list()
+
+	for i in range(len(centroids)):
+		print centroids[i]
+		if DEBUG:
+			centroid_publishers.append(rospy.Publisher('/centroids/c%s' % i, PoseStamped))
+
+	if DEBUG:
+		rospy.sleep(rospy.Duration(0.1))
+		for i in range(len(centroids)):
+			centroid_publishers[i].publish(centroids[i])
+
+	print "Finished frontier calculation"
 	return FrontierResponse(centroids)
 
 # processes a given cell
@@ -311,14 +334,24 @@ def process_cell(x, y):
 			frontiers.append(merged_frontier)
 
 def merge_frontiers(nums):
+	global frontiers
 	print "Merging frontiers"
 	print nums
 	to_merge = list()
 
 	# remove all bordering frontiers from list
 	for i in nums:
+
 		dummy = _Frontier(i, 0, 0)
-		to_merge.append(frontiers.pop(frontiers.index(dummy)))
+
+		j = 0
+		while j < len(frontiers):
+			print "length frontiers %s" % len(frontiers)
+			print "frontier %s index %s" % (i, j)
+			if dummy == frontiers[j]:
+				to_merge.append(frontiers.pop(j))
+				j -= 1
+			j += 1
 
 	# merge all frontiers into one
 	while len(to_merge) > 1:
@@ -339,6 +372,8 @@ def get_only_frontier(f_id):
 # calculates the centroids of the list of frontiers
 def calc_centroids(frontier_list):
 	centroids = list()
+	frontier_list.sort()
+	frontier_list.reverse()
 	for frontier in frontier_list:
 		centroids.append(frontier.centroid())
 
