@@ -7,8 +7,8 @@ from final.srv import *
 from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry, Path
-from move_base_msgs import MoveBaseActionFeedback, MoveBaseActionGoal
-from actionlib_msgs import GoalStatusArray, GoalStatus
+from move_base_msgs.msg import MoveBaseActionFeedback, MoveBaseActionGoal, MoveBaseActionResult
+from actionlib_msgs.msg import GoalStatusArray, GoalStatus
 #spin
 #frontiers
 #astar
@@ -19,11 +19,7 @@ from actionlib_msgs import GoalStatusArray, GoalStatus
 #Service Proxy?
 
 def run_navigation(bumper):
-	global goal_counter
 	global centroids
-
-	goal_counter += 1
-
 	# spin if not the bumper
 	if not bumper:
 		rotate(2 * math.pi)
@@ -37,6 +33,9 @@ def run_navigation(bumper):
 def publish_goal():
 	global centroids
 	global finished
+	global goal_counter
+
+	goal_counter += 1
 
 	if len(centroids) > 0:
 		# get the first centroid
@@ -117,37 +116,56 @@ def calc_frontier_client():
 	except TypeError:
 		print "Invalid start or goal position"
 
-def rotate(angle):
-    print "Begin to rotate"
-    global odom_list
-    global pose
-    
+def theta_from_quat(in_val):
+	quaternion = (in_val.pose.orientation.x,
+				  in_val.pose.orientation.y,
+				  in_val.pose.orientation.z,
+				  in_val.pose.orientation.w)
+	euler = tf.transformations.euler_from_quaternion(quaternion)
+	return euler[2]
 
-    global accum
-    rate = rospy.Rate(100)
+def rotate(angle):
+	global pose
+
+	while 1 and not rospy.is_shutdown():
+		try:
+			test = pose
+			break
+		except NameError:
+			pass
  
-    twist=Twist()
-    #startpose=pose
-    accum= 0
-    speed = .5
-    last = theta_from_quat(pose)
-    if angle < 0:
-        angle = angle * -1
-        speed = speed * -1
-    # while math.fabs(pose.orientation.z - startpose.orientation.z) < angle and not rospy.is_shutdown():  
-    while accum < angle and not rospy.is_shutdown():
-        accum=accum + math.fabs(theta_from_quat(pose) - last)
-       
-        #print accum
-        last = theta_from_quat(pose)
-        if (abs(accum - angle) < 0.5):
-            twist.angular.z = speed / 2
-        else:
-            twist.angular.z = speed
-        twist_pub.publish(twist)
-        rate.sleep()
-    twist.angular.z = 0
-    pub.publish(twist)
+	twist=Twist()
+	accum = 0
+	speed = 0.75
+	last = theta_from_quat(pose)
+
+	if angle < 0:
+		angle = angle * -1
+		speed = speed * -1
+
+	# while math.fabs(pose.orientation.z - startpose.orientation.z) < angle and not rospy.is_shutdown():  
+	while accum < angle and not rospy.is_shutdown():
+		new = theta_from_quat(pose)
+		if new > math.pi - 0.5 and last < 0.5:
+			diff = new - last - 2 * math.pi
+		elif new < 0.5 and last > math.pi - 0.5:
+			diff = new - last + 2 * math.pi
+		else:
+			diff = new - last
+		accum = accum + math.fabs(diff)
+	   
+		#print accum
+		last = theta_from_quat(pose)
+		if (abs(accum - angle) < 0.5):
+			twist.angular.z = speed / 2
+		else:
+			twist.angular.z = speed
+
+		twist_pub.publish(twist)
+		rate.sleep()
+
+	twist.angular.z = 0
+	pub.publish(twist)
 
 def pose_conv(msg):
 	global newPose
@@ -209,7 +227,33 @@ def result(msg):
 
 #Bumper Event Callback function
 def readBumper(msg):
-    # run_navigation(True)
+	pass
+	# run_navigation(True)
+
+#This function accepts a speed and a distance for the robot to move in a straight line
+def readOdom(msg):
+	global pose
+	global odom_tf
+	global theta
+
+	try:
+		pose = msg.pose
+		geo_quat = pose.pose.orientation
+
+		quaternion = (pose.pose.orientation.x,
+					  pose.pose.orientation.y,
+					  pose.pose.orientation.z,
+					  pose.pose.orientation.w)
+		euler = tf.transformations.euler_from_quaternion(quaternion)
+		theta = euler[2]
+	  
+		odom_tf.sendTransform((pose.pose.position.x, pose.pose.position.y, 0),
+			(pose.pose.orientation.x, pose.pose.orientation.y,pose.pose.orientation.z,pose.pose.orientation.w),
+			rospy.Time.now(),
+			"base_footprint",
+			"odom")
+	except NameError:
+		pass
 
 # This is the program's main function
 if __name__ == '__main__':
@@ -223,7 +267,7 @@ if __name__ == '__main__':
 
 	# publishers
 	# path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
-	goal_pub = rospy.Publisher('/move_base/goal')
+	goal_pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal)
 	twist_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
 
 	# Subscribers
@@ -232,6 +276,7 @@ if __name__ == '__main__':
 	result_sub = rospy.Subscriber('/move_base/result', MoveBaseActionResult, result, queue_size=1)
 	bumper_sub = rospy.Subscriber('/mobile_base/events/bumper',BumperEvent, readBumper, queue_size=1) # Callback function to handle bumper events
 	pose_conv_sub = rospy.Subscriber('/poseconv',PoseStamped, pose_conv, queue_size=1)
+	pose_sub = rospy.Subscriber('/odom', Odometry, readOdom, queue_size=1) 
 
 	print "Turtlebot SLAM Begin"
 	finished = 0
