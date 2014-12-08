@@ -3,11 +3,20 @@ import rospy, math, copy
 import numpy as np
 import numpy.ma as ma
 from final.srv import *
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Point
 from nav_msgs.msg import OccupancyGrid, GridCells
 
 # Each cells contains the x and y index in the map
 class Cell:
+	global DEBUG
+	global resolution
+	global width
+	global height
+	global offsetPose
+	global data
+
+	DEBUG = 1
+
 	def __init__(self, x, y):
 		self.x = x
 		self.y = y
@@ -27,7 +36,13 @@ class Cell:
 		return float(self.y * resolution + offsetPose.position.y)
 
 # contains the list of frontier ids and the list of cells contained on this frontier
-class Frontier:
+class _Frontier:
+	global DEBUG
+	global resolution
+	global width
+	global height
+	global offsetPose
+	global data
 
 	def __init__(self, f_id, first_cell_x, first_cell_y):
 		self.size = 0
@@ -35,9 +50,11 @@ class Frontier:
 		self.f_ids.append(f_id)
 		self.cells = list()
 		if DEBUG:
-			self.gridcells = list()
+			self.gridcells = GridCells()
+			self.gridcells.header.frame_id = 'map'
 			self.publisher = rospy.Publisher('/frontiers/f%s' % f_id, GridCells)
 		self.add_cell(first_cell_x, first_cell_y)
+
 
 	# overload equality method
 	def __eq__ (self, other):
@@ -67,6 +84,8 @@ class Frontier:
 		for j in self.cells:
 			cells += "%s " % j
 		cells += "\n"
+		gridcells = "\tGridCells"
+		gridcells += str(self.gridcells)
 		return title + ids + cells
 
 	# adds a cell 
@@ -79,9 +98,11 @@ class Frontier:
 				new_point.x = x * resolution + offsetPose.position.x
 				new_point.y = y * resolution + offsetPose.position.y
 				new_point.z = 0
-				self.gridcells.append(new_point)
+				self.gridcells.cells.append(new_point)
 				self.publish()
 		self.size += 1
+		if DEBUG:
+			print self
 
 	def merge(self, other):
 		overlap_counter = 0
@@ -99,9 +120,9 @@ class Frontier:
 
 		# when in debug mode, merge the gridcells and publish
 		if DEBUG:
-			for gridcell in other.gridcells:
-				if gridcell not in self.gridcells:
-					self.gridcells.append(gridcell)
+			for gridcell in other.gridcells.cells:
+				if gridcell not in self.gridcells.cells:
+					self.gridcells.cells.append(gridcell)
 			self.publish()
 
 		# add the sizes
@@ -113,8 +134,8 @@ class Frontier:
 		length = len(self.cells)
 
 		for c in self.cells:
-			sum_x += c.x_to_meters
-			sum_y += c.y_to_meters
+			sum_x += c.x_to_meters()
+			sum_y += c.y_to_meters()
 
 		cent_x = sum_x / length
 		cent_y = sum_y / length
@@ -128,21 +149,19 @@ class Frontier:
 	if DEBUG:
 		# publishes the frontier
 		def publish(self):
-			rospy.publish(self.gridcells)
+			self.publisher.publish(self.gridcells)
 
 def frontier_server():
 	rospy.init_node('frontier_server')
 
 	##### USE TO ENABLE DEBUG PUBLISHING OF FRONTIER GRIDCELLS
-	global DEBUG
 	global OCCUPIED_THRESHOLD
 
 	# variable assignments
-	DEBUG = 1
 	OCCUPIED_THRESHOLD = 50
 
 	# subscribers
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_Map, queue_size=1)
+	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1) # original /move_base/global_costmap/costmap
 
 	# create service
 	s = rospy.Service('calc_frontiers', Frontier, handle_frontiers)
@@ -151,6 +170,8 @@ def frontier_server():
 	rospy.spin()
 
 def handle_frontiers(req):
+	if DEBUG: 
+		print "Received request"
 	# list of frontiers
 	global frontiers
 	# the current map
@@ -167,13 +188,16 @@ def handle_frontiers(req):
 	global frontier_counter
 
 	# wait for a costmap to be received
-	try:
-		current_costmap = costmap
-	except NameError:
-		costmap = None
+	# try:
+	# 	current_costmap = costmap
+	# except NameError:
+	# 	costmap = None
 
-	while costmap == None and not rospy.is_shutdown():
-		pass
+	# while costmap == None and not rospy.is_shutdown():
+	# 	pass
+
+	if DEBUG:
+		print "Received costmap"
 
 	# copy the current map
 	current_costmap = copy.deepcopy(costmap)
@@ -183,8 +207,23 @@ def handle_frontiers(req):
 	width = current_costmap.info.width
 	height = current_costmap.info.height
 	offsetPose = current_costmap.info.origin
-	data = current_costmap.data
+	old_data = copy.deepcopy(current_costmap.data)
 
+	data = [-1] * width * height
+
+	for i in range(width * height):
+		data[i] = old_data[i]
+
+	if DEBUG:
+		print "Costmap:"
+		print "\tresolution: %s" % resolution
+		print "\twidth:      %s" % width
+		print "\theight:     %s" % height
+		print "\toffsetPose:"
+		print offsetPose
+
+	# initialize frontier list
+	frontiers = list()
 	# initialize frontier counter
 	frontier_counter = 2	# frontier values in the map will be from -2...-something, to not confuse
 							# them with the positive occupied probability
@@ -200,67 +239,71 @@ def handle_frontiers(req):
 
 # processes a given cell
 def process_cell(x, y):
+	global frontier_counter
+	global frontiers
+	global data
 	on_frontier = 0
 	bordering_frontiers = list()
 
 	if data[y * width + x] <= -1:
 		if x > 0 and y > 0:											# top left
 			check = data[(y - 1) * width + (x - 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if y > 0:													# top
 			check = data[(y - 1) * width + x]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if x < width - 1 and y > 0:									# top right
 			check = data[(y - 1) * width + (x + 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if x < width - 1:											# right
 			check = data[y * width + (x + 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if x < width - 1 and y < height - 1:						# bottom right
 			check = data[(y + 1) * width + (x + 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if y < height - 1:											# bottom
 			check = data[(y + 1) * width + x]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
-		if x > 0 and y < height + 1:								# bottom left
+		if x > 0 and y < height - 1:								# bottom left
 			check = data[(y + 1) * width + (x - 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 		if x > 0:													# left
 			check = data[y * width + (x - 1)]
-			if check < -1 and check not in bordering_frontiers:		# preexisting frontier
+			if check < -1 and -check not in bordering_frontiers:	# preexisting frontier
 				bordering_frontiers.append(-check)
-			elif check < OCCUPIED_THRESHOLD:						# on frontier
+			elif check < OCCUPIED_THRESHOLD and check >= 0:			# on frontier
 				on_frontier = 1
 
 	if on_frontier:											# on frontier, so fill in
 		if len(bordering_frontiers) == 0:					# make new frontier
 			data[y * width + x] = -frontier_counter
-			new_frontier = Frontier(frontier_counter, x, y)
-			frontier_counter++;
+			new_frontier = _Frontier(frontier_counter, x, y)
+			frontiers.append(new_frontier)
+			frontier_counter += 1;
 		elif len(bordering_frontiers) == 1:					# only one bordering, add to frontier
 			data[y * width + x] = -bordering_frontiers.pop(0)
-			new_frontier = Frontier(-data[y * width + x], x, y)
+			new_frontier = _Frontier(-data[y * width + x], x, y)
 			frontiers[frontiers.index(new_frontier)].merge(new_frontier)
 		else:												# multiple bordering, check if merged
 			merged_frontier = merge_frontiers(bordering_frontiers)
@@ -268,11 +311,13 @@ def process_cell(x, y):
 			frontiers.append(merged_frontier)
 
 def merge_frontiers(nums):
+	print "Merging frontiers"
+	print nums
 	to_merge = list()
 
 	# remove all bordering frontiers from list
 	for i in nums:
-		dummy = Frontier(i, 0, 0)
+		dummy = _Frontier(i, 0, 0)
 		to_merge.append(frontiers.pop(frontiers.index(dummy)))
 
 	# merge all frontiers into one
@@ -280,6 +325,16 @@ def merge_frontiers(nums):
 		to_merge[0].merge(to_merge.pop())
 
 	return to_merge[0]
+
+
+def get_only_frontier(f_id):
+	global frontiers
+	i = 0
+	for f in frontiers:
+		if f_id in f.f_ids:
+			return frontiers.pop(i)
+		i += 1
+	return 
 
 # calculates the centroids of the list of frontiers
 def calc_centroids(frontier_list):
@@ -295,7 +350,7 @@ def read_map(msg):
 	costmap = msg
 
 if __name__ == "__main__":
-
+	
 	print "Starting server"
 	frontier_server()
 	print "Server shutdown"
