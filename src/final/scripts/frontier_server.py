@@ -15,7 +15,7 @@ class Cell:
 	global offsetPose
 	global data
 
-	DEBUG = 1
+	DEBUG = 0
 
 	def __init__(self, x, y):
 		self.x = x
@@ -96,7 +96,7 @@ class _Frontier:
 			self.cells.append(new_cell)
 			if DEBUG:	# add gridcell and publish if in debug mode
 				self.gridcells.cells.append(Point(x * resolution + offsetPose.position.x + resolution / 2, y * resolution + offsetPose.position.y + resolution / 2, 0))
-				self.publish()
+				# self.publish()
 		self.size += 1
 		if DEBUG:
 			pass
@@ -104,10 +104,8 @@ class _Frontier:
 
 	def merge(self, other):
 		overlap_counter = 0
-		# merge the frontier ids
-		for f_id in other.f_ids:
-			if f_id not in self.f_ids:
-				self.f_ids.append(f_id)
+		self.f_ids.sort()
+		other.f_ids.sort()
 
 		# merge the cells
 		for new_cell in other.cells:
@@ -124,7 +122,21 @@ class _Frontier:
 			for gridcell in other.gridcells.cells:
 				if gridcell not in self.gridcells.cells:
 					self.gridcells.cells.append(gridcell)
-			self.publish()
+			# copy over the publisher
+			if self.f_ids[0] > other.f_ids[0]:
+				dummy_cells = GridCells()
+				dummy_cells.header.frame_id = 'map'
+				dummy_cells.cell_width = resolution
+				dummy_cells.cell_height = resolution
+				self.publisher.publish(dummy_cells)
+				self.publisher = other.publisher
+				self.publish()
+
+		# merge the frontier ids
+		for f_id in other.f_ids:
+			if f_id not in self.f_ids:
+				self.f_ids.append(f_id)
+				self.f_ids.sort()
 
 	def centroid(self):
 		sum_x = 0
@@ -164,7 +176,7 @@ def frontier_server():
 	OCCUPIED_THRESHOLD = 50
 
 	# subscribers
-	map_sub = rospy.Subscriber('/map', OccupancyGrid, read_map, queue_size=1) # original /move_base/global_costmap/costmap
+	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1) # original /move_base/global_costmap/costmap
 
 	# create service
 	s = rospy.Service('calc_frontiers', Frontier, handle_frontiers)
@@ -236,20 +248,20 @@ def handle_frontiers(req):
 		for j in range(height):
 			process_cell(i, j)
 
-	print "Final frontier count: %s" % len(frontiers)
+	if DEBUG:
+		print "Final frontier count: %s" % len(frontiers)
 
 	if DEBUG:
 		rospy.sleep(rospy.Duration(0.1))
-		for i in frontiers:
-			i.publish()
+		publish_frontiers()
 
 	# calculate centroids
 	centroids = calc_centroids(frontiers)
 	centroid_publishers = list()
 
 	for i in range(len(centroids)):
-		print centroids[i]
 		if DEBUG:
+			print centroids[i]
 			centroid_publishers.append(rospy.Publisher('/centroids/c%s' % i, PoseStamped))
 
 	if DEBUG:
@@ -331,12 +343,13 @@ def process_cell(x, y):
 		else:												# multiple bordering, check if merged
 			merged_frontier = merge_frontiers(bordering_frontiers)
 			data[y * width + x] = -merged_frontier.f_ids[0]
+			merged_frontier.add_cell(x, y)
 			frontiers.append(merged_frontier)
+		publish_frontiers()
+		# raw_input("Press ENTER to continue...")
 
 def merge_frontiers(nums):
 	global frontiers
-	print "Merging frontiers"
-	print nums
 	to_merge = list()
 
 	# remove all bordering frontiers from list
@@ -346,8 +359,6 @@ def merge_frontiers(nums):
 
 		j = 0
 		while j < len(frontiers):
-			print "length frontiers %s" % len(frontiers)
-			print "frontier %s index %s" % (i, j)
 			if dummy == frontiers[j]:
 				to_merge.append(frontiers.pop(j))
 				j -= 1
@@ -376,8 +387,12 @@ def calc_centroids(frontier_list):
 	frontier_list.reverse()
 	for frontier in frontier_list:
 		centroids.append(frontier.centroid())
-
 	return centroids
+
+def publish_frontiers():
+	if DEBUG:
+		for f in frontiers:
+			f.publish()
 
 # SUBSCRIBER CALLBACKS
 def read_map(msg):
