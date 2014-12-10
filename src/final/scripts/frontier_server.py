@@ -155,6 +155,7 @@ class _Frontier:
 		newPose.header.frame_id = 'map'
 		newPose.pose.position.x = cent_x + resolution / 2 # add resolution b/c of some
 		newPose.pose.position.y = cent_y + resolution / 2 # weird off-by-one error
+		newPose.pose.orientation.w = 1
 		return newPose
 
 	if DEBUG:
@@ -203,19 +204,15 @@ def handle_frontiers(req):
 	global frontier_counter
 
 	# wait for a costmap to be received
-	# try:
-	# 	current_costmap = costmap
-	# except NameError:
-	# 	costmap = None
-
-	# while costmap == None and not rospy.is_shutdown():
-	# 	pass
-
+	while 1 and not rospy.is_shutdown():
+		try:
+			current_costmap = copy.deepcopy(costmap)
+			break
+		except NameError:
+			pass
+		
 	if DEBUG:
 		print "Received costmap"
-
-	# copy the current map
-	current_costmap = copy.deepcopy(costmap)
 
 	# extract the metadata
 	resolution = current_costmap.info.resolution
@@ -279,6 +276,9 @@ def process_cell(x, y):
 	global data
 	on_frontier = 0
 	bordering_frontiers = list()
+
+	if DEBUG:
+		print "Checking cell [%s, %s] with value %s" % (x, y, data[y * width + x])
 
 	if data[y * width + x] <= -1:
 		if x > 0 and y > 0:											# top left

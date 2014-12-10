@@ -3,8 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Static Map1/Status1
+      Expanded: ~
       Splitter Ratio: 0.52619
     Tree Height: 749
   - Class: rviz/Selection
@@ -323,10 +322,10 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: false
+      Enabled: true
       Name: GlobalMap
       Topic: /move_base/global_costmap/costmap
-      Value: false
+      Value: true
     - Angle Tolerance: 0.1
       Class: rviz/Odometry
       Color: 255; 25; 0
