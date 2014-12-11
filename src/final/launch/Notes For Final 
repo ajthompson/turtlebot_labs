@@ -1,0 +1,12 @@
+Notes on Final Project
+
+
+Can't use gmapping and amcl at same time because they both would publish to the same odom/tf topic at the same time.
+
+If there is a way to just have the robot map and periodically save the map using map_server map_saver incrementally and open it with amcl we may be able to use it. 
+
+Further research required.
+
+http://answers.ros.org/question/65808/switch-from-amcl-to-gmapping-50-of-time-odom-map-is-missing-what/
+
+gmapping also provides localization, so just running gmapping to replace the /map topic and localization should be fine.
