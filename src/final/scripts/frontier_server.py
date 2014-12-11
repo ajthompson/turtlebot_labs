@@ -15,7 +15,7 @@ class Cell:
 	global offsetPose
 	global data
 
-	DEBUG = 0
+	DEBUG = 1
 
 	def __init__(self, x, y):
 		self.x = x
@@ -56,6 +56,7 @@ class _Frontier:
 			self.gridcells.cell_height = resolution
 			self.publisher = rospy.Publisher('/frontiers/f%s' % f_id, GridCells)
 		self.add_cell(first_cell_x, first_cell_y)
+		self.priority = 0
 
 	# overload equality method
 	def __eq__ (self, other):
@@ -70,7 +71,7 @@ class _Frontier:
 
 	# override comparison to sort the list
 	def __cmp__ (self, other):
-		return self.size - other.size
+		return other.priority - self.priority
 
 	# override string so we can print the object
 	def __str__ (self):
@@ -138,7 +139,7 @@ class _Frontier:
 				self.f_ids.append(f_id)
 				self.f_ids.sort()
 
-	def centroid(self):
+	def set_centroid(self):
 		sum_x = 0
 		sum_y = 0
 		num_cells = 0
@@ -156,7 +157,18 @@ class _Frontier:
 		newPose.pose.position.x = cent_x + resolution / 2 # add resolution b/c of some
 		newPose.pose.position.y = cent_y + resolution / 2 # weird off-by-one error
 		newPose.pose.orientation.w = 1
-		return newPose
+		self.centroid = newPose
+
+	def set_priority(self, pose):
+		global current_pose
+		current_x = current_pose.pose.position.x
+		current_y = current_pose.pose.position.y
+		c_x = self.centroid.pose.position.x
+		c_y = self.centroid.pose.position.y
+
+		dist = math.sqrt((c_x - current_x)**2 + (c_y - current_y)**2)
+
+		self.priority = self.size / dist
 
 	if DEBUG:
 		# publishes the frontier
@@ -166,6 +178,10 @@ class _Frontier:
 					self.publisher.publish(self.gridcells)
 			else:
 				self.publisher.publish(self.gridcells)
+
+		def empty(self):
+			self.gridcells.cells = list()
+			self.publisher.publish(self.gridcells)
 
 def frontier_server():
 	rospy.init_node('frontier_server')
@@ -192,6 +208,10 @@ def handle_frontiers(req):
 	global frontiers
 	# the current map
 	global current_costmap
+	# the current pose
+	global current_pose
+
+	current_pose = req.current_pose
 
 	# global map metadata values
 	global resolution
@@ -266,6 +286,8 @@ def handle_frontiers(req):
 		for i in range(len(centroids)):
 			centroid_publishers[i].publish(centroids[i])
 
+	empty_frontiers()
+
 	print "Finished frontier calculation"
 	return FrontierResponse(centroids)
 
@@ -277,8 +299,8 @@ def process_cell(x, y):
 	on_frontier = 0
 	bordering_frontiers = list()
 
-	if DEBUG:
-		print "Checking cell [%s, %s] with value %s" % (x, y, data[y * width + x])
+	# if DEBUG:
+		# print "Checking cell [%s, %s] with value %s" % (x, y, data[y * width + x])
 
 	if data[y * width + x] <= -1:
 		if x > 0 and y > 0:											# top left
@@ -383,11 +405,22 @@ def get_only_frontier(f_id):
 # calculates the centroids of the list of frontiers
 def calc_centroids(frontier_list):
 	centroids = list()
-	frontier_list.sort()
-	frontier_list.reverse()
+
 	for frontier in frontier_list:
-		centroids.append(frontier.centroid())
+		frontier.set_centroid()
+		frontier.set_priority(current_pose)
+
+	frontier_list.sort()
+
+	for frontier in frontier_list:
+		centroids.append(frontier.centroid)
+
 	return centroids
+
+def empty_frontiers():
+	if DEBUG:
+		for f in frontiers:
+			f.empty()
 
 def publish_frontiers():
 	if DEBUG:

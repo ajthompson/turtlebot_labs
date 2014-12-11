@@ -23,7 +23,7 @@ def run_navigation(bumper):
 	global centroids
 	# spin if not the bumper
 	if not bumper:
-		rotate(4 * math.pi)
+		rotate(2 * math.pi)
 
 	# calculate the frontiers
 	print "Requesting centroids"
@@ -116,7 +116,7 @@ def calc_frontier_client():
 	print "Service found"
 	try:
 		calc_frontier = rospy.ServiceProxy('calc_frontiers', Frontier)
-		resp1 = calc_frontier()
+		resp1 = calc_frontier(newPose)
 		return resp1
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
@@ -145,7 +145,7 @@ def rotate(angle):
  
 	twist=Twist()
 	accum = 0
-	speed = 0.75
+	speed = 0.5
 	last = theta_from_quat(pose)
 
 	if angle < 0:
@@ -165,7 +165,7 @@ def rotate(angle):
 	   
 		#print accum
 		last = theta_from_quat(pose)
-		if (abs(accum - angle) < 0.5):
+		if (abs(accum - angle) < 0.2):
 			twist.angular.z = speed / 2
 		else:
 			twist.angular.z = speed
