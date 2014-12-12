@@ -3,7 +3,8 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded: ~
+      Expanded:
+        - /CustomStaticMap1
       Splitter Ratio: 0.52619
     Tree Height: 677
   - Class: rviz/Selection
@@ -51,10 +52,10 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: Static Map
       Topic: /map
-      Value: true
+      Value: false
     - Arrow Length: 0.3
       Class: rviz/PoseArray
       Color: 255; 25; 0
@@ -671,9 +672,17 @@ Visualization Manager:
       Class: rviz/Map
       Color Scheme: map
       Draw Behind: false
-      Enabled: true
+      Enabled: false
       Name: UpdatedCostMap
       Topic: /move_base/global_costmap/updated_costmap
+      Value: false
+    - Alpha: 0.7
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: CustomStaticMap
+      Topic: /static_map
       Value: true
   Enabled: true
   Global Options:
@@ -707,11 +716,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 61.7834
+      Scale: 146.592
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 0.880048
-      Y: -1.98653
+      X: 0.901291
+      Y: -0.782758
     Saved: ~
 Window Geometry:
   Displays:
