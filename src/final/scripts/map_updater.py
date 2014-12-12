@@ -34,7 +34,7 @@ def read_static(msg):
 	global static_map
 	global updated_pub
 	static_map = copy.deepcopy(msg)
-	# updated_pub.publish(static_map)
+	updated_pub.publish(static_map)
 	print "Read Static Map"
 
 def update_map(msg):
@@ -71,15 +71,16 @@ def update_map(msg):
 		new_data_update[i] = updated_map.data[i]
 
 	# copy the map updates over
-	for i in range(update.x, update.x + update.width):
-		for j in range(update.y, update.y + update.height):
-			if static.data[j * static.info.width + i] < 0 and update.data[y*update.width + x] == 0:
+	for i in range(update.x, update.x + update.width - 1):
+		for j in range(update.y, update.y + update.height - 1):
+			if static.data[j * static.info.width + i] < 0 and update.data[(j - update.y)*update.width + (i - update.x)] < OCCUPIED_THRESHOLD:
+				print "Accessing index %s out of %s" % (j * updated_map.info.width + i, updated_map.info.width * updated_map.info.height - 1)
 				new_data_update[j*updated_map.info.width + i] = static.data[j * static.info.width + i]
 			else:
-				new_data_update[j*updated_map.info.width + i] = update.data[y*update.width + x]
-			y += 1
-		y = 0
-		x += 1
+				new_data_update[j*updated_map.info.width + i] = update.data[(j - update.y)*update.width + (i - update.x)]
+			# y += 1
+		# y = 0
+		# x += 1
 
 	updated_map.data = new_data_update
 	updated_pub.publish(updated_map)
@@ -116,16 +117,20 @@ def update_static(msg):
 
 	updated_static.data = new_data_u_static
 	static_map = updated_static
-	# updated_pub.publish(static_map)
+	updated_pub.publish(static_map)
 	print "Updated Static Map"
 
 if __name__ == '__main__':
 	global updated_pub
+	global OCCUPIED_THRESHOLD
+
+	OCCUPIED_THRESHOLD = 50
+
 	rospy.init_node('map_updater')
 
 	updated_pub = rospy.Publisher('/move_base/global_costmap/updated_costmap', OccupancyGrid)
-	map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1)
-	update_sub = rospy.Subscriber('/move_base/global_costmap/costmap_updates', OccupancyGridUpdate, update_map, queue_size=1)
+	# map_sub = rospy.Subscriber('/move_base/global_costmap/costmap', OccupancyGrid, read_map, queue_size=1)
+	# update_sub = rospy.Subscriber('/move_base/global_costmap/costmap_updates', OccupancyGridUpdate, update_map, queue_size=1)
 	static_sub = rospy.Subscriber('/map', OccupancyGrid, read_static, queue_size=1)
 	static_update_sub = rospy.Subscriber('/map_updates', OccupancyGridUpdate, update_static, queue_size=1)
 

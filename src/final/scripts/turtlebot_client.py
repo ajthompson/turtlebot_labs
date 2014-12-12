@@ -38,6 +38,7 @@ def publish_goal():
 	global centroids
 	global finished
 	global goal_counter
+	global failed
 
 	goal_counter += 1
 
@@ -52,7 +53,11 @@ def publish_goal():
 		goal.goal.target_pose = first
 		goal_pub.publish(goal)
 	else:	# there are no reachable centroids
-		finished = 1
+		if failed > 1:
+			finished = 1
+		else:
+			failed += 1
+			run_navigation(False)
 
 # Add additional imports for each of the message types used
 def compute_path():
@@ -190,6 +195,9 @@ def status(msg):
 
 def result(msg):
 	global centroids
+	global failed
+	global tries
+
 	turtle_result = msg
 	result_status = turtle_result.status
 
@@ -211,11 +219,18 @@ def result(msg):
 	elif result_status.status == GoalStatus.SUCCEEDED:	# The goal was reached
 		print "Goal %s reached" % goal_counter
 		print result_status.text
+		failed = 0
 		run_navigation(False)
 	elif result_status.status == GoalStatus.ABORTED:	# The goal was aborted (Stuck/fail to reach)
 		print "Goal %s aborted" % goal_counter
 		print result_status.text
-		run_navigation(False)
+		if tries < 8:
+			publish_goal()
+			tries += 1
+		else:
+			failed += 1
+			run_navigation(False)
+
 	elif result_status.status == GoalStatus.REJECTED:	# The goal was determined unreachable by the nav stack
 		print "Goal %s rejected" % goal_counter
 		print result_status.text
@@ -274,6 +289,11 @@ if __name__ == '__main__':
 	global path_pub
 	global twist_pub
 	global goal_counter
+	global failed
+	global tries
+
+	failed = 0
+	tries = 0
 
 	# publishers
 	# path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)

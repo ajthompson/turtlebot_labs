@@ -72,13 +72,13 @@ class CheckLine:
 		new_y = int(math.floor(i * self.inc_y + self.start_j))
 		index = new_y * new_map.info.width + new_x
 
-		if start_x > self.goal_i and start_y > self.goal_j:
+		if self.start_i > self.goal_i and self.start_j > self.goal_j:
 			end_case = 0
-		elif start_x > self.goal_i and start_y <= self.goal_j:
+		elif self.start_i > self.goal_i and self.start_j <= self.goal_j:
 			end_case = 1
-		elif start_x <= self.goal_i and start_y > self.goal_j:
+		elif self.start_i <= self.goal_i and self.start_j > self.goal_j:
 			end_case = 2
-		elif start_x <= self.goal_i and start_y <= self.goal_j:
+		elif self.start_i <= self.goal_i and self.start_j <= self.goal_j:
 			end_case = 3
 	
 		while 1 and not rospy.is_shutdown() and new_x >= 0 and new_x < new_map.info.width and new_y >= 0 and new_y < new_map.info.height:
@@ -94,12 +94,14 @@ class CheckLine:
 				if new_x <= self.goal_i and new_y <= self.goal_j:
 					break
 			elif end_case == 1:
-				if new_x <= self.goal_i and new_y > self.goal_j:
+				if new_x <= self.goal_i and new_y >= self.goal_j:
 					break
 			elif end_case == 2:
-				if new_x > self.goal_i and new_y <= self.goal_j:
+				if new_x >= self.goal_i and new_y <= self.goal_j:
+					break
 			elif end_case == 3:
-				if new_x > self.goal_i and new_y > self.goal_j:
+				if new_x >= self.goal_i and new_y >= self.goal_j:
+					break
 
 			new_x = int(math.floor(i * self.inc_x + self.start_i))
 			new_y = int(math.floor(i * self.inc_y + self.start_j))
@@ -191,8 +193,8 @@ def create_static_map(current, c_pose):
 	count = 0
 	for l in lines:
 		l.check_path()
-		new_map.data = new_map_data
-		static_pub.publish(new_map)
+		# new_map.data = new_map_data
+		# static_pub.publish(new_map)
 		count += 1
 
 	new_map.data = new_map_data
