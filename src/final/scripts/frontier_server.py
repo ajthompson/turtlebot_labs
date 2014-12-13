@@ -30,10 +30,10 @@ class Cell:
 		return "(%s, %s)" % (self.x, self.y)
 
 	def x_to_meters(self):
-		return float(self.x * resolution + offsetPose.position.x - resolution / 2)
+		return float(self.x * resolution + offsetPose.position.x)
 
 	def y_to_meters(self):
-		return float(self.y * resolution + offsetPose.position.y - resolution / 2)
+		return float(self.y * resolution + offsetPose.position.y)
 
 # contains the list of frontier ids and the list of cells contained on this frontier
 class _Frontier:
@@ -168,7 +168,8 @@ class _Frontier:
 
 		dist = math.sqrt((c_x - current_x)**2 + (c_y - current_y)**2)
 
-		self.priority = self.size / dist
+		self.priority = 10 * self.size + (1 / dist)
+		self.dist = dist
 
 	if DEBUG:
 		# publishes the frontier
@@ -413,7 +414,8 @@ def calc_centroids(frontier_list):
 	frontier_list.sort()
 
 	for frontier in frontier_list:
-		centroids.append(frontier.centroid)
+		if frontier.size > 3 and frontier.dist > 0.4:
+			centroids.append(frontier.centroid)
 
 	return centroids
 
