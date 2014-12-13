@@ -1,0 +1,13 @@
+<launch>
+    <!-- start pose conversion node -->
+    <node name="convert_odom_to_pose" pkg="lab4" type="convert_odom_to_pstamped.py" />
+	<!-- start map updater -->
+	<node name="map_updater" pkg="final" type="map_updater.py" />
+	<!-- start frontier server -->
+	<node name="frontier_server" pkg="final" type="frontier_server.py" />
+	<!-- start turtlebot client -->
+	<node name="turtlebot_client" pkg="lab4" type="turtlebot_client.py" />
+	<!-- start rviz -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab4)/../../astar_lab.rviz" />
+
+</launch>
