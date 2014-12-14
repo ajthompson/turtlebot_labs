@@ -6,7 +6,9 @@
 	<!-- start frontier server -->
 	<node name="frontier_server" pkg="final" type="frontier_server.py" />
 	<!-- start turtlebot client -->
-	<node name="turtlebot_client" pkg="lab4" type="turtlebot_client.py" />
+	<node name="turtlebot_client_node" pkg="final" type="turtlebot_client.py" />
+	<!-- start static builder-->
+	<node name="static_builder" pkg="final" type="static_builder.py" />
 	<!-- start rviz -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find lab4)/../../astar_lab.rviz" />
 

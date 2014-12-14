@@ -168,9 +168,27 @@ class _Frontier:
 
 		dist = math.sqrt((c_x - current_x)**2 + (c_y - current_y)**2)
 
+
+
+
+
+#####################################################################################################################################
+#Edit this stuff
+
+		#Alec's variant
 		self.priority = 10 * self.size + (1 / dist)
 		self.dist = dist
 
+		#variant 1
+		#self.priority = self.size/dist
+		#self.dist = dist
+	
+		#variant 2
+		#magic_number1
+		#magic_number2
+		#self.priority = magic_number1 * dist +magic_number2 * self.size 
+
+######################################################################################################################################
 	if DEBUG:
 		# publishes the frontier
 		def publish(self):
@@ -185,6 +203,7 @@ class _Frontier:
 			self.publisher.publish(self.gridcells)
 
 def frontier_server():
+	print "in frontier_server!"
 	rospy.init_node('frontier_server')
 
 	##### USE TO ENABLE DEBUG PUBLISHING OF FRONTIER GRIDCELLS
@@ -203,6 +222,7 @@ def frontier_server():
 	rospy.spin()
 
 def handle_frontiers(req):
+	print "In handle_frontiers!"
 	if DEBUG: 
 		print "Received request"
 	# list of frontiers
@@ -275,6 +295,7 @@ def handle_frontiers(req):
 
 	# calculate centroids
 	centroids = calc_centroids(frontiers)
+	print "Centroids: %s" %centroids
 	centroid_publishers = list()
 
 	for i in range(len(centroids)):
@@ -294,6 +315,7 @@ def handle_frontiers(req):
 
 # processes a given cell
 def process_cell(x, y):
+	print "in process cell"
 	global frontier_counter
 	global frontiers
 	global data
@@ -372,6 +394,7 @@ def process_cell(x, y):
 		# raw_input("Press ENTER to continue...")
 
 def merge_frontiers(nums):
+	print "int merge_frontiers"
 	global frontiers
 	to_merge = list()
 
@@ -395,6 +418,7 @@ def merge_frontiers(nums):
 
 
 def get_only_frontier(f_id):
+	print " in get_only_frontier"
 	global frontiers
 	i = 0
 	for f in frontiers:
@@ -405,8 +429,9 @@ def get_only_frontier(f_id):
 
 # calculates the centroids of the list of frontiers
 def calc_centroids(frontier_list):
+	print "Calculating..."
 	centroids = list()
-
+	print "Centroids: %s" %centroids
 	for frontier in frontier_list:
 		frontier.set_centroid()
 		frontier.set_priority(current_pose)

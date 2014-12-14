@@ -22,8 +22,10 @@ from actionlib_msgs.msg import GoalStatusArray, GoalStatus
 def run_navigation(bumper):
 	global centroids
 	# spin if not the bumper
+	print "run_navigation"
 	if not bumper:
 		rotate(2 * math.pi)
+	
 
 	# calculate the frontiers
 	print "Requesting centroids"
@@ -41,7 +43,7 @@ def publish_goal():
 	global failed
 
 	goal_counter += 1
-
+	print "dajkhfjajlfjdlka"
 	if len(centroids) > 0:
 		print "Publishing goal %s" % goal_counter
 		# get the first centroid
@@ -120,9 +122,14 @@ def calc_frontier_client():
 	rospy.wait_for_service('calc_frontiers')
 	print "Service found"
 	try:
+		print "Error in calc_frontier!"
 		calc_frontier = rospy.ServiceProxy('calc_frontiers', Frontier)
-		resp1 = calc_frontier(newPose)
-		return resp1
+		print "getting response"
+	
+		resp1 = calc_frontier(newPose)#I think there is something bad here
+		print "returning value"
+		return resp1		
+		
 	except rospy.ServiceException, e:
 		print "Service call failed: %s"%e
 	except TypeError:
