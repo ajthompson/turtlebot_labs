@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Robot Footprint1
-        - /UpdatedCostMap1/Status1
       Splitter Ratio: 0.52619
     Tree Height: 730
   - Class: rviz/Selection
@@ -66,7 +65,7 @@ Visualization Manager:
       Value: false
     - Alpha: 1
       Class: rviz/Polygon
-      Color: 25; 255; 0
+      Color: 0; 0; 127
       Enabled: true
       Name: Robot Footprint
       Topic: /move_base/global_costmap/obstacle_layer_footprint/footprint_stamped
@@ -503,7 +502,7 @@ Visualization Manager:
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
-      Color: 25; 255; 0
+      Color: 0; 0; 127
       Enabled: true
       Name: NavStackPath
       Topic: /move_base/TrajectoryPlannerROS/global_plan
@@ -564,11 +563,11 @@ Visualization Manager:
         Value: false
       Name: Current View
       Near Clip Distance: 0.01
-      Scale: 119.068
+      Scale: 71.0187
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 3.04336
-      Y: -4.62392
+      X: -1.03907
+      Y: 0.584416
     Saved: ~
 Window Geometry:
   Displays:

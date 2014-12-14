@@ -176,7 +176,7 @@ class _Frontier:
 #Edit this stuff
 
 		#Alec's variant
-		self.priority = 10 * self.size + (1 / dist)
+		self.priority = 10 * self.size + dist
 		self.dist = dist
 
 		#variant 1
@@ -203,7 +203,7 @@ class _Frontier:
 			self.publisher.publish(self.gridcells)
 
 def frontier_server():
-	print "in frontier_server!"
+	# print "in frontier_server!"
 	rospy.init_node('frontier_server')
 
 	##### USE TO ENABLE DEBUG PUBLISHING OF FRONTIER GRIDCELLS
@@ -222,7 +222,7 @@ def frontier_server():
 	rospy.spin()
 
 def handle_frontiers(req):
-	print "In handle_frontiers!"
+	# print "In handle_frontiers!"
 	if DEBUG: 
 		print "Received request"
 	# list of frontiers
@@ -315,7 +315,7 @@ def handle_frontiers(req):
 
 # processes a given cell
 def process_cell(x, y):
-	print "in process cell"
+	# print "in process cell"
 	global frontier_counter
 	global frontiers
 	global data
@@ -394,7 +394,7 @@ def process_cell(x, y):
 		# raw_input("Press ENTER to continue...")
 
 def merge_frontiers(nums):
-	print "int merge_frontiers"
+	# print "int merge_frontiers"
 	global frontiers
 	to_merge = list()
 
@@ -418,7 +418,7 @@ def merge_frontiers(nums):
 
 
 def get_only_frontier(f_id):
-	print " in get_only_frontier"
+	# print " in get_only_frontier"
 	global frontiers
 	i = 0
 	for f in frontiers:
@@ -429,9 +429,9 @@ def get_only_frontier(f_id):
 
 # calculates the centroids of the list of frontiers
 def calc_centroids(frontier_list):
-	print "Calculating..."
+	# print "Calculating..."
 	centroids = list()
-	print "Centroids: %s" %centroids
+	# print "Centroids: %s" %centroids
 	for frontier in frontier_list:
 		frontier.set_centroid()
 		frontier.set_priority(current_pose)
@@ -441,6 +441,11 @@ def calc_centroids(frontier_list):
 	for frontier in frontier_list:
 		if frontier.size > 3 and frontier.dist > 0.4:
 			centroids.append(frontier.centroid)
+
+	for c1 in centroids:
+		for c2 in centroids:
+			if c1 != c2 and math.sqrt((c1.pose.position.x - c2.pose.position.x)**2 + (c1.pose.position.y - c2.pose.position.y)**2) < 0.5:
+				centroids.remove(c2)
 
 	return centroids
 

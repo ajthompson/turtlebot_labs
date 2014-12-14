@@ -9,7 +9,8 @@ from kobuki_msgs.msg import BumperEvent
 from geometry_msgs.msg import Twist, PoseStamped
 from nav_msgs.msg import Odometry, Path
 from move_base_msgs.msg import MoveBaseActionFeedback, MoveBaseActionGoal, MoveBaseActionResult
-from actionlib_msgs.msg import GoalStatusArray, GoalStatus
+from actionlib_msgs.msg import GoalStatusArray, GoalStatus, GoalID
+from std_msgs.msg import Empty
 #spin
 #frontiers
 #astar
@@ -41,24 +42,49 @@ def publish_goal():
 	global finished
 	global goal_counter
 	global failed
+	global full_fail
+	global last_goal
+	global last_none_flag
+	global goal
 
 	goal_counter += 1
-	print "dajkhfjajlfjdlka"
+	# print "dajkhfjajlfjdlka"
 	if len(centroids) > 0:
 		print "Publishing goal %s" % goal_counter
 		# get the first centroid
 		first = centroids.pop(0)
+		# check if it is too close
+		dist = math.sqrt((first.pose.position.x - newPose.pose.position.x)**2 + (first.pose.position.y - newPose.pose.position.y)**2)
+		# if last_goal != None:
+		# 	last_none_flag = 0
+
+		# last_dist = 999
+
+		# if not last_none_flag:
+		# 	last_dist = math.sqrt((last_goal.pose.position.x - newPose.pose.position.x)**2 + (last_goal.pose.position.y - newPose.pose.position.y)**2)
+
 		# create a goal
 		goal = MoveBaseActionGoal()
 		goal.header = first.header
 		goal.goal_id.id = "Goal%s" % goal_counter
 		goal.goal.target_pose = first
 		goal_pub.publish(goal)
+		last_goal = first
+		# else:
+		# 	print "Goal too close"
+		# 	# goal_counter -= 1
+		# 	if len(centroids) > 0:
+		# 		publish_goal()
+		# 	elif full_fail > 3:
+		# 		finished = 1
+		# 	else:
+		# 		full_fail += 1
+		# 		run_navigation(False)
 	else:	# there are no reachable centroids
-		if failed > 1:
+		if failed:
 			finished = 1
 		else:
-			failed += 1
+			failed = 1
 			run_navigation(False)
 
 # Add additional imports for each of the message types used
@@ -122,12 +148,12 @@ def calc_frontier_client():
 	rospy.wait_for_service('calc_frontiers')
 	print "Service found"
 	try:
-		print "Error in calc_frontier!"
+		# print "Error in calc_frontier!"
 		calc_frontier = rospy.ServiceProxy('calc_frontiers', Frontier)
-		print "getting response"
+		# print "getting response"
 	
 		resp1 = calc_frontier(newPose)#I think there is something bad here
-		print "returning value"
+		# print "returning value"
 		return resp1		
 		
 	except rospy.ServiceException, e:
@@ -194,7 +220,14 @@ def pose_conv(msg):
 
 def feedback(msg):
 	global turtle_feedback
-	turtle_feedback= msg
+	global abort_pub
+	turtle_feedback = msg
+
+	# print "Feedback received"
+
+	if turtle_feedback.status.status == turtle_feedback.status.ACTIVE:
+		if math.sqrt((goal.goal.target_pose.pose.position.x - newPose.pose.position.x)**2 + (goal.goal.target_pose.pose.position.y - newPose.pose.position.y)**2) < 0.5:
+			abort_pub.publish(goal.goal_id)
 
 def status(msg):
 	global turtle_status
@@ -204,6 +237,7 @@ def result(msg):
 	global centroids
 	global failed
 	global tries
+	global full_fail
 
 	turtle_result = msg
 	result_status = turtle_result.status
@@ -222,21 +256,29 @@ def result(msg):
 	elif result_status.status == GoalStatus.PREEMPTED:	# The goal was canceled during execution
 		print "Goal %s preempted" % goal_counter
 		print result_status.text
+		failed = 0
+		tries = 0
+		full_fail = 0
 		run_navigation(False)
 	elif result_status.status == GoalStatus.SUCCEEDED:	# The goal was reached
 		print "Goal %s reached" % goal_counter
 		print result_status.text
 		failed = 0
+		tries = 0
+		full_fail = 0
 		run_navigation(False)
 	elif result_status.status == GoalStatus.ABORTED:	# The goal was aborted (Stuck/fail to reach)
 		print "Goal %s aborted" % goal_counter
 		print result_status.text
-		if tries < 8:
-			publish_goal()
-			tries += 1
-		else:
-			failed += 1
-			run_navigation(False)
+		# if failed:
+		# 	run_navigation(False)
+		# elif tries < 5 and len(centroids) > 0:
+		# 	publish_goal()
+		# 	tries += 1
+		# else:
+		# 	failed = 1
+		# 	run_navigation(False)
+		publish_goal()
 
 	elif result_status.status == GoalStatus.REJECTED:	# The goal was determined unreachable by the nav stack
 		print "Goal %s rejected" % goal_counter
@@ -251,7 +293,9 @@ def result(msg):
 		print result_status.text
 	elif result_status.status == GoalStatus.RECALLED:	# Goal successfully canceled before execution
 		print "Goal %s recalled" % goal_counter
-		print result_status.text
+		failed = 0
+		tries = 0
+		run_navigation(False)
 	elif result_status.status == GoalStatus.LOST:		# Goal lost, shouldn't occur ever
 		print "Goal %s lost" % goal_counter
 		print result_status.text
@@ -295,17 +339,20 @@ if __name__ == '__main__':
 	global finished
 	global path_pub
 	global twist_pub
+	global abort_pub
 	global goal_counter
 	global failed
 	global tries
-
-	failed = 0
-	tries = 0
+	global full_fail
+	global last_none_flag
+	global last_goal
 
 	# publishers
 	# path_pub = rospy.Publisher('/TrajectoryPlannerROS/global_plan',Path)
+	complete_pub = rospy.Publisher('/complete', Empty)
 	goal_pub = rospy.Publisher('/move_base/goal', MoveBaseActionGoal)
 	twist_pub = rospy.Publisher('cmd_vel_mux/input/teleop', Twist) # Publisher for commanding robot motion
+	abort_pub = rospy.Publisher('move_base/cancel', GoalID)
 
 	# Subscribers
 	feedback_sub = rospy.Subscriber('/move_base/feedback', MoveBaseActionFeedback,feedback, queue_size=1)
@@ -318,11 +365,17 @@ if __name__ == '__main__':
 	print "Turtlebot SLAM Begin"
 	finished = 0
 	goal_counter = -1
+	failed = 0
+	tries = 0
+	full_fail = 0
+	last_none_flag = 1
+	last_goal = None
 	run_navigation(False)
 	
 	# wait for the program to finish
 	while not finished and not rospy.is_shutdown():
 		rospy.sleep(rospy.Duration(1))
 
+	complete_pub.publish(Empty())
 	print "Turtlebot SLAM is complete"
 	print "EXITING"
