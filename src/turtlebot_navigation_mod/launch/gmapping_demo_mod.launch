@@ -3,7 +3,8 @@
     <arg name="rgb_processing" value="false" />
     <arg name="depth_registration" value="false" />
     <arg name="depth_processing" value="false" />
-    
+	<!-- start play voice node -->
+	<node name="turtlebot_voice_node" pkg="final" type="play_voice.py" />   
     <!-- We must specify an absolute topic name because if not it will be prefixed by "$(arg camera)".
          Probably is a bug in the nodelet manager: https://github.com/ros/nodelet_core/issues/7 --> 
     <arg name="scan_topic" value="/scan" />
