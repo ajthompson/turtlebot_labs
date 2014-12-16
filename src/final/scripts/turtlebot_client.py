@@ -46,7 +46,15 @@ def publish_goal():
 	global last_goal
 	global last_none_flag
 	global goal
-
+	global init
+	init= PoseStamped()
+	
+	init.pose.position.x=0
+	init.pose.position.y=0
+	init.pose.position.z=0
+	init.pose.orientation.x=0
+	init.pose.orientation.y=0
+	init.pose.orientation.z=1
 	goal_counter += 1
 	# print "dajkhfjajlfjdlka"
 	if len(centroids) > 0:
@@ -83,8 +91,17 @@ def publish_goal():
 	else:	# there are no reachable centroids
 		if failed:
 			finished = 1
+			goal = MoveBaseActionGoal()
+			goal.goal_id.id = "Goal%s" % goal_counter
+			goal.goal.target_pose = init
+			goal_pub.publish(goal)
+			
 		else:
 			failed = 1
+			goal = MoveBaseActionGoal()
+			goal.goal_id.id = "Goal%s" % goal_counter
+			goal.goal.target_pose = init
+			goal_pub.publish(goal)
 			run_navigation(False)
 
 # Add additional imports for each of the message types used
